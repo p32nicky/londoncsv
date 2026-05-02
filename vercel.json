@@ -4,7 +4,7 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "50mb", "includeFiles": "app/**" }
+      "config": { "maxLambdaSize": "50mb", "includeFiles": ["app/**", "pinterest-76b6f.html"] }
     }
   ],
   "routes": [{ "src": "/(.*)", "dest": "/api/index.py" }]

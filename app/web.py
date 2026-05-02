@@ -106,6 +106,13 @@ async def rss_feed():
     return Response(content=xml_str, media_type="application/rss+xml")
 
 
+@app.get("/pinterest-76b6f.html", response_class=HTMLResponse)
+async def pinterest_verify():
+    path = os.path.join(os.path.dirname(BASE_DIR), "pinterest-76b6f.html")
+    with open(path, encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+
 @app.get("/api/status")
 async def status():
     _, total = list_tours(settings.db_path, per_page=1)
