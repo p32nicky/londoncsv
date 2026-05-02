@@ -3,7 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Optional
 
-_DATABASE_URL = os.environ.get("DATABASE_URL", "")
+_DATABASE_URL = os.environ.get("DATABASE_URL", "").replace("&channel_binding=require", "").replace("?channel_binding=require&", "?")
 USE_POSTGRES = bool(_DATABASE_URL)
 
 if USE_POSTGRES:
