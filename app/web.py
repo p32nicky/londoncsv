@@ -100,8 +100,25 @@ async def generate_article(slug: str):
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
         return JSONResponse({"error": "ANTHROPIC_API_KEY not set"}, status_code=500)
+    def shorten(url: str) -> str:
+        token = os.environ.get("BITLY_TOKEN", "")
+        if not token:
+            return url
+        try:
+            r = httpx.post(
+                "https://api-ssl.bitly.com/v4/shorten",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                json={"long_url": url},
+                timeout=10,
+            )
+            if r.status_code == 200:
+                return r.json().get("link", url)
+        except Exception:
+            pass
+        return url
+
     try:
-        affiliate_link = tour["link"]
+        affiliate_link = shorten(tour["link"])
         kw = tour.get("keywords", "") or ""
         STOP = {"a","an","the","and","or","but","in","on","at","to","for","of","with","from","by","as","is","it","this","that","was","are","be","been","has","have","had","not","its"}
         raw_words = [w.strip() for w in kw.split(",") if w.strip()] if kw else []
