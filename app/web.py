@@ -110,7 +110,7 @@ async def generate_article(slug: str):
     if not api_key:
         return JSONResponse({"error": "ANTHROPIC_API_KEY not set"}, status_code=500)
     def shorten(url: str) -> str:
-        token = os.environ.get("BITLY_TOKEN", "")
+        token = os.environ.get("BITLY_TOKEN", "").strip()
         if not token:
             return url
         try:
@@ -231,7 +231,7 @@ async def pinterest_verify():
 
 @app.get("/api/test-bitly")
 async def test_bitly():
-    token = os.environ.get("BITLY_TOKEN", "")
+    token = os.environ.get("BITLY_TOKEN", "").strip()
     if not token:
         return JSONResponse({"error": "no token"})
     try:
