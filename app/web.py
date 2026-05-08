@@ -280,8 +280,12 @@ async def tumblr_callback(code: str = "", state: str = "", error: str = ""):
         info = httpx.get("https://api.tumblr.com/v2/user/info",
             headers={"Authorization": f"Bearer {access_token}"}, timeout=10).json()
         blogs = info.get("response", {}).get("user", {}).get("blogs", [])
+        communities = info.get("response", {}).get("user", {}).get("communities", [])
         blog_name = next((b["name"] for b in blogs if b.get("primary")), blogs[0]["name"] if blogs else "")
         save_setting(settings.db_path, "tumblr_blog_name", blog_name)
+        # Save community UUIDs for later use
+        for c in communities:
+            save_setting(settings.db_path, f"tumblr_community_{c['name']}", c["uuid"])
         return HTMLResponse(f"""
         <html><body style="font-family:sans-serif;max-width:500px;margin:4rem auto;padding:1rem">
         <h2>✅ Tumblr connected!</h2>
@@ -337,15 +341,31 @@ async def post_tumblr(slug: str):
     tags_match = re.search(r'class="hashtags">(.*?)</p>', article_html, re.DOTALL)
     tags_text = tags_match.group(1) if tags_match else ""
     tags = [t.lstrip("#") for t in tags_text.split() if t.startswith("#")]
+    # Check if blog is a community — use UUID + NPF endpoint
+    community_uuid = get_setting(settings.db_path, f"tumblr_community_{blog}")
+    if community_uuid:
+        blog_id = community_uuid
+        endpoint = f"https://api.tumblr.com/v2/blog/{blog_id}/posts"
+        payload = {
+            "content": [{"type": "text", "text": article_html, "subtype": "indented"}],
+            "tags": tags,
+            "state": "published",
+            "title": title,
+        }
+    else:
+        endpoint = f"https://api.tumblr.com/v2/blog/{blog}/post"
+        payload = {"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"}
+
     resp = httpx.post(
-        f"https://api.tumblr.com/v2/blog/{blog}/post",
+        endpoint,
         headers={"Authorization": f"Bearer {token}"},
-        json={"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"},
+        json=payload,
         timeout=20,
     )
     if resp.status_code in (200, 201):
         post_id = resp.json().get("response", {}).get("id", "")
-        return JSONResponse({"status": "posted", "url": f"https://{blog}.tumblr.com/post/{post_id}"})
+        url = f"https://www.tumblr.com/communities/{blog}" if community_uuid else f"https://{blog}.tumblr.com/post/{post_id}"
+        return JSONResponse({"status": "posted", "url": url})
     return JSONResponse({"error": resp.text}, status_code=500)
 
 
