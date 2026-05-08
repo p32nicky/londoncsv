@@ -186,6 +186,31 @@ def save_article(db_path: str, slug: str, html: str) -> None:
             conn.execute("UPDATE tours SET article_text=? WHERE slug=?", (html, slug))
 
 
+def get_setting(db_path: str, key: str) -> Optional[str]:
+    ph = "%s" if USE_POSTGRES else "?"
+    with _get_conn(db_path) as conn:
+        if USE_POSTGRES:
+            conn.cursor().execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+        else:
+            conn.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+        row = _one(conn, f"SELECT value FROM settings WHERE key={ph}", (key,))
+        return row["value"] if row else None
+
+
+def save_setting(db_path: str, key: str, value: str) -> None:
+    ph = "%s" if USE_POSTGRES else "?"
+    with _get_conn(db_path) as conn:
+        if USE_POSTGRES:
+            conn.cursor().execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+            conn.cursor().execute(
+                f"INSERT INTO settings (key,value) VALUES ({ph},{ph}) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value",
+                (key, value)
+            )
+        else:
+            conn.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+            conn.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (key, value))
+
+
 def get_tour_by_slug(db_path: str, slug: str) -> Optional[dict]:
     ph = "%s" if USE_POSTGRES else "?"
     with _get_conn(db_path) as conn:

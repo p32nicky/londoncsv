@@ -8,6 +8,7 @@
       <button onclick="copyTitle()" class="btn-copy btn-title">① Copy Title</button>
       <button onclick="copyBody()" class="btn-copy">② Copy Body</button>
       <button onclick="copyHashtags()" class="btn-copy btn-hash"># Copy Tags</button>
+      <button onclick="postTumblr()" class="btn-tumblr" id="btn-tumblr">📝 Post to Tumblr</button>
       <button onclick="regenerate()" class="btn-regen">🔄 Regenerate</button>
     </div>
   </div>
@@ -38,6 +39,8 @@
 .btn-copy:hover { background: #c0001d; }
 .btn-hash { background: #1da1f2; }
 .btn-hash:hover { background: #0d8ecf; }
+.btn-tumblr { background: #35465c; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
+.btn-tumblr:hover { background: #1e2d3d; }
 .btn-regen { background: #555; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .btn-regen:hover { background: #333; }
 .medium-steps { background: #fff8e1; border-left: 4px solid #f5a623; padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; }
@@ -61,6 +64,27 @@ async function copyHashtags() {
   await navigator.clipboard.writeText(tags.innerText);
   btn.textContent = '✅ Tags Copied!';
   setTimeout(() => btn.textContent = '# Copy Tags', 2000);
+}
+
+async function postTumblr() {
+  const slug = "{{ t.slug }}";
+  const btn = document.getElementById('btn-tumblr');
+  btn.textContent = '⏳ Posting...';
+  btn.disabled = true;
+  const resp = await fetch(`/api/post-tumblr/${slug}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.status === 'posted') {
+    btn.textContent = '✅ Posted!';
+    if (data.url) window.open(data.url, '_blank');
+  } else if (data.error === 'not_connected') {
+    btn.textContent = '📝 Post to Tumblr';
+    btn.disabled = false;
+    window.open('/tumblr/auth', '_blank');
+  } else {
+    btn.textContent = '❌ Error';
+    btn.disabled = false;
+    alert(data.error || 'Unknown error');
+  }
 }
 
 async function regenerate() {

@@ -6,12 +6,13 @@ import anthropic
 import httpx
 
 from fastapi import FastAPI, Request, Query
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response, RedirectResponse
+from requests_oauthlib import OAuth1Session
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug, save_article
+from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug, save_article, get_setting, save_setting
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -227,6 +228,80 @@ async def pinterest_verify():
     path = os.path.join(os.path.dirname(BASE_DIR), "pinterest-76b6f.html")
     with open(path, encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
+
+def _tumblr_keys():
+    ck = os.environ.get("TUMBLR_CONSUMER_KEY", "").strip()
+    cs = os.environ.get("TUMBLR_CONSUMER_SECRET", "").strip()
+    return ck, cs
+
+
+@app.get("/tumblr/auth")
+async def tumblr_auth():
+    ck, cs = _tumblr_keys()
+    callback = f"{settings.site_url}/tumblr/callback"
+    oauth = OAuth1Session(ck, cs, callback_uri=callback)
+    r = oauth.fetch_request_token("https://www.tumblr.com/oauth/request_token")
+    save_setting(settings.db_path, "tumblr_req_token", r["oauth_token"])
+    save_setting(settings.db_path, "tumblr_req_secret", r["oauth_token_secret"])
+    auth_url = oauth.authorization_url("https://www.tumblr.com/oauth/authorize")
+    return RedirectResponse(auth_url)
+
+
+@app.get("/tumblr/callback", response_class=HTMLResponse)
+async def tumblr_callback(oauth_token: str = "", oauth_verifier: str = ""):
+    ck, cs = _tumblr_keys()
+    req_secret = get_setting(settings.db_path, "tumblr_req_secret")
+    oauth = OAuth1Session(ck, cs,
+        resource_owner_key=oauth_token,
+        resource_owner_secret=req_secret,
+        verifier=oauth_verifier)
+    tokens = oauth.fetch_access_token("https://www.tumblr.com/oauth/access_token")
+    save_setting(settings.db_path, "tumblr_oauth_token", tokens["oauth_token"])
+    save_setting(settings.db_path, "tumblr_oauth_secret", tokens["oauth_token_secret"])
+    # Get primary blog name
+    info = oauth.get("https://api.tumblr.com/v2/user/info").json()
+    blogs = info.get("response", {}).get("user", {}).get("blogs", [])
+    blog_name = next((b["name"] for b in blogs if b.get("primary")), blogs[0]["name"] if blogs else "")
+    save_setting(settings.db_path, "tumblr_blog_name", blog_name)
+    return HTMLResponse(f"""
+    <h2>✅ Tumblr connected!</h2>
+    <p>Blog: <strong>{blog_name}.tumblr.com</strong></p>
+    <p>You can close this tab and go back to your articles.</p>
+    """)
+
+
+@app.post("/api/post-tumblr/{slug}")
+async def post_tumblr(slug: str):
+    ck, cs = _tumblr_keys()
+    token = get_setting(settings.db_path, "tumblr_oauth_token")
+    secret = get_setting(settings.db_path, "tumblr_oauth_secret")
+    blog = get_setting(settings.db_path, "tumblr_blog_name")
+    if not all([token, secret, blog]):
+        return JSONResponse({"error": "not_connected"}, status_code=400)
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    article_html = (dict(tour).get("article_text") or "").strip()
+    if not article_html:
+        return JSONResponse({"error": "no_article"}, status_code=400)
+    # Extract title from H1
+    import re
+    h1 = re.search(r"<h1[^>]*>(.*?)</h1>", article_html, re.IGNORECASE | re.DOTALL)
+    title = re.sub(r"<[^>]+>", "", h1.group(1)).strip() if h1 else tour["title"]
+    # Extract tags from hashtags paragraph
+    tags_match = re.search(r'class="hashtags">(.*?)</p>', article_html, re.DOTALL)
+    tags_text = tags_match.group(1) if tags_match else ""
+    tags = ",".join(t.lstrip("#") for t in tags_text.split() if t.startswith("#"))
+    oauth = OAuth1Session(ck, cs, token, secret)
+    resp = oauth.post(
+        f"https://api.tumblr.com/v2/blog/{blog}/post",
+        json={"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"},
+    )
+    if resp.status_code in (200, 201):
+        post_id = resp.json().get("response", {}).get("id", "")
+        return JSONResponse({"status": "posted", "url": f"https://{blog}.tumblr.com/post/{post_id}"})
+    return JSONResponse({"error": resp.text}, status_code=500)
 
 
 @app.get("/api/test-bitly")
