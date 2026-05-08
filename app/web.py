@@ -154,7 +154,7 @@ Requirements:
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-2.1",
+                "model": "claude-opus-4-7",
                 "max_tokens": 1500,
                 "messages": [{"role": "user", "content": prompt}],
             },
