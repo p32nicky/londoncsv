@@ -91,15 +91,30 @@ async def generate_article(slug: str):
         tags = " ".join(f"#{w.strip().replace(' ','').title()}" for w in kw.split(",") if w.strip())[:200]
         if not tags:
             tags = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
-        prompt = f"""Write a detailed SEO-optimised travel article about this London tour.
-Title: {tour['title']}
+        prompt = f"""Write a highly detailed, SEO-optimised travel article about this London tour.
+
+Tour Title: {tour['title']}
 Description: {tour['description']}
-Requirements: 500-600 words, H2 subheadings, engaging intro, tips, written in HTML using only <h1><h2><p><strong> tags, no html/head/body tags, catchy SEO h1 title."""
+Keywords: {kw}
+
+Requirements:
+- 900-1100 words total
+- Catchy SEO-optimised <h1> title (not just the tour name, include keywords like "London", "2024", "best", etc.)
+- Engaging hook intro paragraph that grabs attention
+- At least 5 <h2> subheadings covering: overview, highlights, what to expect, tips for visitors, why book this tour
+- Naturally weave in SEO keywords throughout (London tours, things to do in London, best London experiences, etc.)
+- Include specific details about what visitors will see and experience
+- Mention ideal visitor types (families, couples, solo travellers, history buffs, etc.)
+- Practical tips section (what to wear, when to arrive, what to bring)
+- Use <strong> tags to bold key phrases and keywords
+- Write in HTML using ONLY <h1> <h2> <p> <strong> <ul> <li> tags
+- Do NOT include <html> <head> <body> tags
+- Conversational but authoritative tone"""
 
         resp = httpx.post(
             "https://api.anthropic.com/v1/messages",
             headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-            json={"model": "claude-opus-4-7", "max_tokens": 800, "messages": [{"role": "user", "content": prompt}]},
+            json={"model": "claude-opus-4-7", "max_tokens": 1800, "messages": [{"role": "user", "content": prompt}]},
             timeout=55,
         )
         if resp.status_code != 200:
