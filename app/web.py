@@ -248,7 +248,7 @@ async def tumblr_auth():
         f"https://www.tumblr.com/oauth2/authorize"
         f"?client_id={ck}"
         f"&response_type=code"
-        f"&scope=write%3Aposts+read%3Auser"
+        f"&scope=basic+write"
         f"&redirect_uri={TUMBLR_CALLBACK}"
         f"&state={state}"
     )
