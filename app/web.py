@@ -154,7 +154,7 @@ Requirements:
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-haiku-4-7",
+                "model": "claude-sonnet-4-7",
                 "max_tokens": 1200,
                 "messages": [{"role": "user", "content": prompt}],
             },
