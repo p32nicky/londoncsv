@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>{{ t.title }}</title>
+  <meta name="description" content="{{ t.description[:160] if t.description else t.title }}"/>
+</head>
+<body>
+<article>
+{{ article_html | safe }}
+</article>
+</body>
+</html>

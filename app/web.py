@@ -77,6 +77,21 @@ async def tour_article(request: Request, slug: str):
     })
 
 
+@app.get("/tour/{slug}/medium", response_class=HTMLResponse)
+async def tour_medium(request: Request, slug: str):
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return HTMLResponse("Tour not found", status_code=404)
+    existing = dict(tour).get("article_text")
+    if not existing:
+        return HTMLResponse("Article not yet generated. Visit /tour/{}/article first.".format(slug), status_code=404)
+    return templates.TemplateResponse("article_medium.html", {
+        "request": request,
+        "t": tour,
+        "article_html": existing,
+    })
+
+
 @app.post("/api/generate-article/{slug}")
 async def generate_article(slug: str):
     tour = get_tour_by_slug(settings.db_path, slug)
