@@ -342,23 +342,31 @@ async def post_tumblr(slug: str):
     tags_text = tags_match.group(1) if tags_match else ""
     tags = [t.lstrip("#") for t in tags_text.split() if t.startswith("#")]
     community_uuid = get_setting(settings.db_path, f"tumblr_community_{blog}")
-    blog_id = community_uuid if community_uuid else blog
+    is_community = bool(community_uuid)
 
-    payload = {"type": "text", "title": title, "body": article_html, "tags": tags}
-    if not community_uuid:
-        payload["state"] = "published"
-    resp = httpx.post(
-        f"https://api.tumblr.com/v2/blog/{blog_id}/post",
-        headers={"Authorization": f"Bearer {token}"},
-        json=payload,
-        timeout=20,
-    )
-    logger.info(f"Tumblr post response: {resp.status_code} {resp.text[:300]}")
-    if resp.status_code in (200, 201):
-        post_id = resp.json().get("response", {}).get("id", "")
-        url = f"https://www.tumblr.com/communities/{blog}" if community_uuid else f"https://{blog}.tumblr.com/post/{post_id}"
-        return JSONResponse({"status": "posted", "url": url})
-    return JSONResponse({"error": resp.text}, status_code=500)
+    # Try multiple approaches for communities
+    attempts = []
+    if is_community:
+        encoded_uuid = community_uuid.replace(":", "%3A")
+        attempts = [
+            (f"https://api.tumblr.com/v2/blog/{encoded_uuid}/post", {"type": "text", "title": title, "body": article_html, "tags": tags}),
+            (f"https://api.tumblr.com/v2/blog/{blog}/post", {"type": "text", "title": title, "body": article_html, "tags": tags}),
+            (f"https://api.tumblr.com/v2/blog/{encoded_uuid}/posts", {"content": [{"type": "text", "text": f"<h1>{title}</h1>\n{article_html}"}], "tags": tags}),
+        ]
+    else:
+        attempts = [(f"https://api.tumblr.com/v2/blog/{blog}/post", {"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"})]
+
+    last_resp = None
+    for endpoint, payload in attempts:
+        resp = httpx.post(endpoint, headers={"Authorization": f"Bearer {token}"}, json=payload, timeout=20)
+        logger.info(f"Tumblr {endpoint}: {resp.status_code} {resp.text[:200]}")
+        last_resp = resp
+        if resp.status_code in (200, 201):
+            post_id = resp.json().get("response", {}).get("id", "")
+            url = f"https://www.tumblr.com/communities/{blog}" if is_community else f"https://{blog}.tumblr.com/post/{post_id}"
+            return JSONResponse({"status": "posted", "url": url})
+
+    return JSONResponse({"error": last_resp.text if last_resp else "no attempts"}, status_code=500)
 
 
 @app.get("/api/test-bitly")
