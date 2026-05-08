@@ -292,6 +292,16 @@ async def tumblr_callback(code: str = "", state: str = "", error: str = ""):
         return HTMLResponse(f"<h2>❌ Error</h2><pre>{e}</pre>", status_code=500)
 
 
+@app.get("/api/tumblr-blogs")
+async def tumblr_blogs():
+    token = get_setting(settings.db_path, "tumblr_access_token")
+    if not token:
+        return JSONResponse({"error": "not connected"})
+    r = httpx.get("https://api.tumblr.com/v2/user/info",
+        headers={"Authorization": f"Bearer {token}"}, timeout=10)
+    return JSONResponse(r.json())
+
+
 @app.get("/tumblr/set-blog", response_class=HTMLResponse)
 async def tumblr_set_blog(name: str = ""):
     if name:
