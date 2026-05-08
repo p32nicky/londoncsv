@@ -341,27 +341,17 @@ async def post_tumblr(slug: str):
     tags_match = re.search(r'class="hashtags">(.*?)</p>', article_html, re.DOTALL)
     tags_text = tags_match.group(1) if tags_match else ""
     tags = [t.lstrip("#") for t in tags_text.split() if t.startswith("#")]
-    # Check if blog is a community — use UUID + NPF endpoint
     community_uuid = get_setting(settings.db_path, f"tumblr_community_{blog}")
-    if community_uuid:
-        blog_id = community_uuid
-        endpoint = f"https://api.tumblr.com/v2/blog/{blog_id}/posts"
-        payload = {
-            "content": [{"type": "text", "text": article_html, "subtype": "indented"}],
-            "tags": tags,
-            "state": "published",
-            "title": title,
-        }
-    else:
-        endpoint = f"https://api.tumblr.com/v2/blog/{blog}/post"
-        payload = {"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"}
+    blog_id = community_uuid if community_uuid else blog
 
+    # Try legacy endpoint first (supports HTML body)
     resp = httpx.post(
-        endpoint,
+        f"https://api.tumblr.com/v2/blog/{blog_id}/post",
         headers={"Authorization": f"Bearer {token}"},
-        json=payload,
+        json={"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"},
         timeout=20,
     )
+    logger.info(f"Tumblr post response: {resp.status_code} {resp.text[:300]}")
     if resp.status_code in (200, 201):
         post_id = resp.json().get("response", {}).get("id", "")
         url = f"https://www.tumblr.com/communities/{blog}" if community_uuid else f"https://{blog}.tumblr.com/post/{post_id}"
