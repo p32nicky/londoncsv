@@ -7,6 +7,7 @@
     <div class="copy-btns">
       <button onclick="copyTitle()" class="btn-copy btn-title">① Copy Title</button>
       <button onclick="copyBody()" class="btn-copy">② Copy Body</button>
+      <button onclick="regenerate()" class="btn-regen">🔄 Regenerate</button>
     </div>
   </div>
 
@@ -34,6 +35,8 @@
 .copy-btns { display: flex; gap: 0.5rem; }
 .btn-copy { background: #e60023; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .btn-copy:hover { background: #c0001d; }
+.btn-regen { background: #555; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
+.btn-regen:hover { background: #333; }
 .medium-steps { background: #fff8e1; border-left: 4px solid #f5a623; padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; }
 .medium-steps ol { margin: 0.4rem 0 0 1.2rem; padding: 0; }
 .medium-steps li { margin-bottom: 0.3rem; }
@@ -48,6 +51,20 @@
 </style>
 
 <script>
+async function regenerate() {
+  const slug = "{{ t.slug }}";
+  const btn = document.querySelector('.btn-regen');
+  btn.textContent = '⏳ Regenerating...';
+  btn.disabled = true;
+  const resp = await fetch(`/api/clear-article/${slug}`, { method: 'POST' });
+  if (resp.ok) {
+    window.location.href = `/tour/${slug}/article`;
+  } else {
+    btn.textContent = '❌ Error';
+    btn.disabled = false;
+  }
+}
+
 async function copyTitle() {
   const h1 = document.querySelector('#article-body h1');
   const title = h1 ? h1.innerText : document.title;

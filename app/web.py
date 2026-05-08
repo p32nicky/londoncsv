@@ -63,7 +63,7 @@ async def tour_article(request: Request, slug: str):
     tour = get_tour_by_slug(settings.db_path, slug)
     if not tour:
         return HTMLResponse("Tour not found", status_code=404)
-    existing = dict(tour).get("article_text")
+    existing = (dict(tour).get("article_text") or "").strip()
     if existing:
         return templates.TemplateResponse("article.html", {
             "request": request, "t": tour,
@@ -90,6 +90,15 @@ async def tour_medium(request: Request, slug: str):
         "t": tour,
         "article_html": existing,
     })
+
+
+@app.post("/api/clear-article/{slug}")
+async def clear_article(slug: str):
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    save_article(settings.db_path, slug, "")
+    return JSONResponse({"status": "cleared"})
 
 
 @app.post("/api/generate-article/{slug}")
