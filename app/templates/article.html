@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Article: {{ t.title }} — {{ site_title }}{% endblock %}
+{% block title %}{{ t.title }} — {{ site_title }}{% endblock %}
 {% block content %}
 <div class="article-page">
   <div class="article-actions">
@@ -7,17 +7,16 @@
     <button onclick="copyArticle()" class="btn-copy">📋 Copy for Medium</button>
   </div>
 
-  {% if t.image_url %}
-  <img src="{{ t.image_url }}" alt="{{ t.title }}" class="article-hero"/>
-  {% endif %}
-
-  <div class="article-body" id="article-body">
+  <article id="article-body">
+    {% if t.image_url %}
+    <img src="{{ t.image_url }}" alt="{{ t.title }}" class="article-hero"/>
+    {% endif %}
     {{ article_html | safe }}
-  </div>
+  </article>
 
   <div class="article-meta">
-    <p><strong>Import to Medium:</strong> Copy the text above, go to <a href="https://medium.com/new-story" target="_blank">medium.com/new-story</a>, paste into the editor.</p>
-    <p>Or use Medium's import tool: <a href="https://medium.com/p/import" target="_blank">medium.com/p/import</a> and paste this URL: <code>{{ tour_url }}/article</code></p>
+    <p><strong>Medium import URL:</strong> <code>{{ tour_url }}/article</code></p>
+    <p>Go to <a href="https://medium.com/p/import" target="_blank">medium.com/p/import</a> → paste URL above. Or use <strong>Copy for Medium</strong> button and paste into <a href="https://medium.com/new-story" target="_blank">medium.com/new-story</a>.</p>
   </div>
 </div>
 
