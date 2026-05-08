@@ -15,8 +15,7 @@
   </article>
 
   <div class="article-meta">
-    <p><strong>Medium import URL:</strong> <code>{{ tour_url }}/medium</code></p>
-    <p>Go to <a href="https://medium.com/p/import" target="_blank">medium.com/p/import</a> → paste URL above. Or use <strong>Copy for Medium</strong> button and paste into <a href="https://medium.com/new-story" target="_blank">medium.com/new-story</a>.</p>
+    <p>Click <strong>📋 Copy for Medium</strong> above, then go to <a href="https://medium.com/new-story" target="_blank">medium.com/new-story</a> and paste (<kbd>Ctrl+V</kbd>). Headings, bold, and links will all carry over.</p>
   </div>
 </div>
 
@@ -37,14 +36,24 @@
 </style>
 
 <script>
-function copyArticle() {
+async function copyArticle() {
   const body = document.getElementById('article-body');
-  const text = body.innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.btn-copy');
+  const btn = document.querySelector('.btn-copy');
+  try {
+    const html = body.innerHTML;
+    const text = body.innerText;
+    const item = new ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([text], { type: 'text/plain' }),
+    });
+    await navigator.clipboard.write([item]);
     btn.textContent = '✅ Copied!';
-    setTimeout(() => btn.textContent = '📋 Copy for Medium', 2000);
-  });
+  } catch(e) {
+    // fallback: plain text
+    await navigator.clipboard.writeText(body.innerText);
+    btn.textContent = '✅ Copied (plain)!';
+  }
+  setTimeout(() => btn.textContent = '📋 Copy for Medium', 2500);
 }
 </script>
 {% endblock %}
