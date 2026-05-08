@@ -121,6 +121,7 @@ async def tour_article(request: Request, slug: str):
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if not api_key:
             return HTMLResponse("<h1>Error</h1><pre>ANTHROPIC_API_KEY not set in Vercel environment variables</pre>", status_code=500)
+        logger.info(f"Using API key: {api_key[:12]}...{api_key[-4:]}")
 
         client = anthropic.Anthropic(api_key=api_key)
         tour_url = f"{settings.site_url}/tour/{tour['slug']}"
@@ -151,7 +152,8 @@ Requirements:
         )
         article_html = message.content[0].text
     except Exception as e:
-        return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre>", status_code=500)
+        key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
+        return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre><p>Key used: {key_preview}</p>", status_code=500)
 
     return templates.TemplateResponse("article.html", {
         "request": request,
