@@ -160,7 +160,8 @@ Requirements:
             },
             timeout=60,
         )
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            return HTMLResponse(f"<h1>API Error {resp.status_code}</h1><pre>{resp.text}</pre><p>Key: {api_key[:12]}...{api_key[-4:]}</p>")
         article_html = resp.json()["content"][0]["text"]
     except Exception as e:
         key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
