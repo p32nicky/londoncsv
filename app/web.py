@@ -242,12 +242,11 @@ async def tumblr_auth():
         ck, cs = _tumblr_keys()
         if not ck or not cs:
             return JSONResponse({"error": "missing keys", "ck": bool(ck), "cs": bool(cs)})
-        callback = "https://londoncsv.vercel.app/tumblr/callback"
-        oauth = OAuth1Session(ck, cs, callback_uri=callback)
+        oauth = OAuth1Session(ck, cs, callback_uri="oob")
         r = oauth.fetch_request_token("https://www.tumblr.com/oauth/request_token")
         save_setting(settings.db_path, "tumblr_req_token", r["oauth_token"])
         save_setting(settings.db_path, "tumblr_req_secret", r["oauth_token_secret"])
-        auth_url = oauth.authorization_url("https://www.tumblr.com/oauth/authorize")
+        auth_url = f"https://www.tumblr.com/oauth/authorize?oauth_token={r['oauth_token']}"
         return RedirectResponse(auth_url)
     except Exception as e:
         import traceback
@@ -256,25 +255,52 @@ async def tumblr_auth():
 
 @app.get("/tumblr/callback", response_class=HTMLResponse)
 async def tumblr_callback(oauth_token: str = "", oauth_verifier: str = ""):
-    ck, cs = _tumblr_keys()
-    req_secret = get_setting(settings.db_path, "tumblr_req_secret")
-    oauth = OAuth1Session(ck, cs,
-        resource_owner_key=oauth_token,
-        resource_owner_secret=req_secret,
-        verifier=oauth_verifier)
-    tokens = oauth.fetch_access_token("https://www.tumblr.com/oauth/access_token")
-    save_setting(settings.db_path, "tumblr_oauth_token", tokens["oauth_token"])
-    save_setting(settings.db_path, "tumblr_oauth_secret", tokens["oauth_token_secret"])
-    # Get primary blog name
-    info = oauth.get("https://api.tumblr.com/v2/user/info").json()
-    blogs = info.get("response", {}).get("user", {}).get("blogs", [])
-    blog_name = next((b["name"] for b in blogs if b.get("primary")), blogs[0]["name"] if blogs else "")
-    save_setting(settings.db_path, "tumblr_blog_name", blog_name)
+    if oauth_token and oauth_verifier:
+        # Auto callback flow
+        return await _tumblr_finish(oauth_token, oauth_verifier)
+    # PIN flow — show form
+    req_token = get_setting(settings.db_path, "tumblr_req_token") or ""
     return HTMLResponse(f"""
-    <h2>✅ Tumblr connected!</h2>
-    <p>Blog: <strong>{blog_name}.tumblr.com</strong></p>
-    <p>You can close this tab and go back to your articles.</p>
+    <html><body style="font-family:sans-serif;max-width:500px;margin:4rem auto;padding:1rem">
+    <h2>🔗 Connect Tumblr</h2>
+    <p>After approving on Tumblr, enter the PIN/verifier code shown:</p>
+    <form method="get" action="/tumblr/verify">
+      <input type="hidden" name="oauth_token" value="{req_token}"/>
+      <input name="pin" placeholder="Enter PIN from Tumblr" style="padding:0.5rem;width:100%;font-size:1rem;margin-bottom:1rem"/>
+      <button type="submit" style="background:#35465c;color:#fff;padding:0.6rem 1.2rem;border:none;border-radius:6px;font-size:1rem;cursor:pointer">Connect ✓</button>
+    </form>
+    </body></html>
     """)
+
+
+@app.get("/tumblr/verify", response_class=HTMLResponse)
+async def tumblr_verify(oauth_token: str = "", pin: str = ""):
+    return await _tumblr_finish(oauth_token, pin)
+
+
+async def _tumblr_finish(oauth_token: str, verifier: str):
+    try:
+        ck, cs = _tumblr_keys()
+        req_secret = get_setting(settings.db_path, "tumblr_req_secret")
+        oauth = OAuth1Session(ck, cs,
+            resource_owner_key=oauth_token,
+            resource_owner_secret=req_secret,
+            verifier=verifier)
+        tokens = oauth.fetch_access_token("https://www.tumblr.com/oauth/access_token")
+        save_setting(settings.db_path, "tumblr_oauth_token", tokens["oauth_token"])
+        save_setting(settings.db_path, "tumblr_oauth_secret", tokens["oauth_token_secret"])
+        info = oauth.get("https://api.tumblr.com/v2/user/info").json()
+        blogs = info.get("response", {}).get("user", {}).get("blogs", [])
+        blog_name = next((b["name"] for b in blogs if b.get("primary")), blogs[0]["name"] if blogs else "")
+        save_setting(settings.db_path, "tumblr_blog_name", blog_name)
+        return HTMLResponse(f"""
+        <html><body style="font-family:sans-serif;max-width:500px;margin:4rem auto;padding:1rem">
+        <h2>✅ Tumblr connected!</h2>
+        <p>Blog: <strong>{blog_name}.tumblr.com</strong></p>
+        <p><a href="/">← Back to tours</a></p>
+        </body></html>""")
+    except Exception as e:
+        return HTMLResponse(f"<h2>❌ Error</h2><pre>{e}</pre>", status_code=500)
 
 
 @app.post("/api/post-tumblr/{slug}")
