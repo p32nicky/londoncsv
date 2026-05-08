@@ -154,7 +154,7 @@ Requirements:
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-2.1",
                 "max_tokens": 1500,
                 "messages": [{"role": "user", "content": prompt}],
             },
