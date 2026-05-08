@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone, timedelta
+import anthropic
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from fastapi import FastAPI, Request, Query
@@ -112,7 +113,6 @@ async def pinterest_verify():
 
 @app.get("/tour/{slug}/article", response_class=HTMLResponse)
 async def tour_article(request: Request, slug: str):
-    import anthropic
     tour = get_tour_by_slug(settings.db_path, slug)
     if not tour:
         return HTMLResponse("Tour not found", status_code=404)
