@@ -7,6 +7,7 @@
     <div class="copy-btns">
       <button onclick="copyTitle()" class="btn-copy btn-title">① Copy Title</button>
       <button onclick="copyBody()" class="btn-copy">② Copy Body</button>
+      <button onclick="copyHashtags()" class="btn-copy btn-hash"># Copy Tags</button>
       <button onclick="regenerate()" class="btn-regen">🔄 Regenerate</button>
     </div>
   </div>
@@ -35,6 +36,8 @@
 .copy-btns { display: flex; gap: 0.5rem; }
 .btn-copy { background: #e60023; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .btn-copy:hover { background: #c0001d; }
+.btn-hash { background: #1da1f2; }
+.btn-hash:hover { background: #0d8ecf; }
 .btn-regen { background: #555; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .btn-regen:hover { background: #333; }
 .medium-steps { background: #fff8e1; border-left: 4px solid #f5a623; padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; }
@@ -51,6 +54,15 @@
 </style>
 
 <script>
+async function copyHashtags() {
+  const tags = document.querySelector('#article-body .hashtags');
+  const btn = document.querySelector('.btn-hash');
+  if (!tags) { btn.textContent = '❌ No tags'; setTimeout(() => btn.textContent = '# Copy Tags', 2000); return; }
+  await navigator.clipboard.writeText(tags.innerText);
+  btn.textContent = '✅ Tags Copied!';
+  setTimeout(() => btn.textContent = '# Copy Tags', 2000);
+}
+
 async function regenerate() {
   const slug = "{{ t.slug }}";
   const btn = document.querySelector('.btn-regen');
