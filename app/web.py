@@ -372,7 +372,11 @@ async def post_tumblr(slug: str):
 
 @app.post("/api/auto-publish")
 async def auto_publish():
-    import re
+    import re, traceback
+    try:
+        tour = get_next_unpublished(settings.db_path)
+    except Exception as e:
+        return JSONResponse({"error": "db error", "detail": str(e), "trace": traceback.format_exc()}, status_code=500)
     tour = get_next_unpublished(settings.db_path)
     if not tour:
         return JSONResponse({"status": "done", "message": "All tours published"})
