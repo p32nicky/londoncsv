@@ -120,7 +120,7 @@ async def generate_article(slug: str):
                 json={"long_url": url},
                 timeout=10,
             )
-            if r.status_code == 200:
+            if r.status_code in (200, 201):
                 return r.json().get("link", url)
         except Exception:
             pass
