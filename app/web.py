@@ -229,6 +229,23 @@ async def pinterest_verify():
         return HTMLResponse(content=f.read())
 
 
+@app.get("/api/test-bitly")
+async def test_bitly():
+    token = os.environ.get("BITLY_TOKEN", "")
+    if not token:
+        return JSONResponse({"error": "no token"})
+    try:
+        r = httpx.post(
+            "https://api-ssl.bitly.com/v4/shorten",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"long_url": "https://www.viator.com/tours/London/test"},
+            timeout=10,
+        )
+        return JSONResponse({"status": r.status_code, "body": r.json()})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
 @app.get("/api/status")
 async def status():
     _, total = list_tours(settings.db_path, per_page=1)
