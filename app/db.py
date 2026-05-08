@@ -186,6 +186,35 @@ def save_article(db_path: str, slug: str, html: str) -> None:
             conn.execute("UPDATE tours SET article_text=? WHERE slug=?", (html, slug))
 
 
+def get_next_unpublished(db_path: str):
+    """Get next tour that has no article or hasn't been posted to Tumblr."""
+    with _get_conn(db_path) as conn:
+        try:
+            if not USE_POSTGRES:
+                conn.execute("ALTER TABLE tours ADD COLUMN tumblr_posted_at TEXT")
+        except Exception:
+            pass
+        return _one(conn,
+            "SELECT * FROM tours WHERE (article_text IS NULL OR article_text = '') OR tumblr_posted_at IS NULL ORDER BY id LIMIT 1"
+        )
+
+
+def mark_tumblr_posted(db_path: str, slug: str) -> None:
+    ph = "%s" if USE_POSTGRES else "?"
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    with _get_conn(db_path) as conn:
+        if USE_POSTGRES:
+            conn.cursor().execute("ALTER TABLE tours ADD COLUMN IF NOT EXISTS tumblr_posted_at TEXT")
+            conn.cursor().execute(f"UPDATE tours SET tumblr_posted_at={ph} WHERE slug={ph}", (now, slug))
+        else:
+            try:
+                conn.execute("ALTER TABLE tours ADD COLUMN tumblr_posted_at TEXT")
+            except Exception:
+                pass
+            conn.execute("UPDATE tours SET tumblr_posted_at=? WHERE slug=?", (now, slug))
+
+
 def get_setting(db_path: str, key: str) -> Optional[str]:
     ph = "%s" if USE_POSTGRES else "?"
     with _get_conn(db_path) as conn:

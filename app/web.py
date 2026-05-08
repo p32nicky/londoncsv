@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug, save_article, get_setting, save_setting
+from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug, save_article, get_setting, save_setting, get_next_unpublished, mark_tumblr_posted
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -367,6 +367,105 @@ async def post_tumblr(slug: str):
             return JSONResponse({"status": "posted", "url": url})
 
     return JSONResponse({"error": last_resp.text if last_resp else "no attempts"}, status_code=500)
+
+
+@app.post("/api/auto-publish")
+async def auto_publish():
+    import re
+    tour = get_next_unpublished(settings.db_path)
+    if not tour:
+        return JSONResponse({"status": "done", "message": "All tours published"})
+
+    slug = tour["slug"]
+    article_html = (dict(tour).get("article_text") or "").strip()
+
+    # Step 1: generate article if missing
+    if not article_html:
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return JSONResponse({"error": "no api key"}, status_code=500)
+        affiliate_link = shorten(tour["link"])
+        kw = tour.get("keywords", "") or ""
+        STOP = {"a","an","the","and","or","but","in","on","at","to","for","of","with","from","by","as","is","it","this","that","was","are","be","been","has","have","had","not","its"}
+        raw_words = [w.strip() for w in kw.split(",") if w.strip()] if kw else []
+        good = [w.replace(" ","") for w in raw_words if w.strip().lower() not in STOP and len(w.strip()) > 2]
+        tags_str = " ".join(f"#{w.title()}" for w in good if w)[:200]
+        if not tags_str:
+            tags_str = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
+        prompt = f"""Write a highly detailed, SEO-optimised travel article about this London tour.
+
+Tour Title: {tour['title']}
+Description: {tour['description']}
+Keywords: {kw}
+
+Requirements:
+- 900-1100 words total
+- Catchy SEO-optimised <h1> title (not just the tour name, include keywords like "London", "2024", "best", etc.)
+- Engaging hook intro paragraph that grabs attention
+- At least 5 <h2> subheadings covering: overview, highlights, what to expect, tips for visitors, why book this tour
+- Naturally weave in SEO keywords throughout (London tours, things to do in London, best London experiences, etc.)
+- Include specific details about what visitors will see and experience
+- Mention ideal visitor types (families, couples, solo travellers, history buffs, etc.)
+- Practical tips section (what to wear, when to arrive, what to bring)
+- Use <strong> tags to bold key phrases and keywords
+- Write in HTML using ONLY <h1> <h2> <p> <strong> <ul> <li> tags
+- Do NOT include <html> <head> <body> tags
+- Conversational but authoritative tone"""
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 1800, "messages": [{"role": "user", "content": prompt}]},
+            timeout=55,
+        )
+        if resp.status_code != 200:
+            return JSONResponse({"error": resp.text}, status_code=500)
+        article_html = resp.json()["content"][0]["text"]
+        article_html += f"""
+<hr/>
+<h2>Book This Tour Today</h2>
+<p>Don't miss out! <strong><a href="{affiliate_link}" target="_blank" rel="nofollow noopener">Book {tour['title']} on Viator →</a></strong></p>
+<p>Secure your spot now — spaces fill up fast!</p>
+<p class="hashtags">{tags_str}</p>"""
+        save_article(settings.db_path, slug, article_html)
+
+    # Step 2: post to Tumblr
+    token = get_setting(settings.db_path, "tumblr_access_token")
+    blog = get_setting(settings.db_path, "tumblr_blog_name")
+    if not token or not blog:
+        return JSONResponse({"status": "article_saved", "error": "tumblr not connected", "slug": slug})
+
+    h1 = re.search(r"<h1[^>]*>(.*?)</h1>", article_html, re.IGNORECASE | re.DOTALL)
+    title = re.sub(r"<[^>]+>", "", h1.group(1)).strip() if h1 else tour["title"]
+    tags_match = re.search(r'class="hashtags">(.*?)</p>', article_html, re.DOTALL)
+    tags_text = tags_match.group(1) if tags_match else ""
+    tags = [t.lstrip("#") for t in tags_text.split() if t.startswith("#")]
+
+    community_uuid = get_setting(settings.db_path, f"tumblr_community_{blog}")
+    blog_id = community_uuid if community_uuid else blog
+    payload = {"type": "text", "title": title, "body": article_html, "tags": tags}
+    if not community_uuid:
+        payload["state"] = "published"
+
+    tresp = httpx.post(
+        f"https://api.tumblr.com/v2/blog/{blog_id}/post",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload, timeout=20,
+    )
+    if tresp.status_code in (200, 201):
+        mark_tumblr_posted(settings.db_path, slug)
+        return JSONResponse({"status": "published", "slug": slug, "tour": tour["title"]})
+    return JSONResponse({"status": "article_saved", "tumblr_error": tresp.text, "slug": slug})
+
+
+@app.get("/api/auto-publish-status")
+async def auto_publish_status():
+    _, total = list_tours(settings.db_path, per_page=1)
+    next_tour = get_next_unpublished(settings.db_path)
+    return JSONResponse({
+        "total": total,
+        "next_up": next_tour["title"] if next_tour else None,
+        "remaining": "unknown - check DB directly",
+    })
 
 
 @app.get("/api/test-bitly")
