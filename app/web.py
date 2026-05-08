@@ -164,6 +164,20 @@ Requirements:
         if resp.status_code != 200:
             return HTMLResponse(f"<h1>API Error {resp.status_code}</h1><pre>{resp.text}</pre>")
         article_html = resp.json()["content"][0]["text"]
+
+        # Extract keywords for hashtags
+        kw = tour.get("keywords", "") or tour["title"]
+        tags = " ".join(f"#{w.strip().replace(' ','').title()}" for w in kw.split(",") if w.strip())[:200]
+        if not tags:
+            tags = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
+
+        # Append CTA + hashtags explicitly
+        article_html += f"""
+<hr/>
+<h2>Book This Tour Today</h2>
+<p>Don't miss out on this incredible London experience. <strong><a href="{affiliate_link}" target="_blank" rel="nofollow noopener">Click here to book {tour['title']} on Viator →</a></strong></p>
+<p>Secure your spot now — spaces fill up fast!</p>
+<p class="hashtags">{tags}</p>"""
     except Exception as e:
         key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
         return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre><p>Key used: {key_preview}</p>", status_code=500)
