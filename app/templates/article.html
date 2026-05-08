@@ -7,6 +7,10 @@
     <button onclick="copyArticle()" class="btn-copy">📋 Copy for Medium</button>
   </div>
 
+  {% if t.image_url %}
+  <img src="{{ t.image_url }}" alt="{{ t.title }}" class="article-hero"/>
+  {% endif %}
+
   <div class="article-body" id="article-body">
     {{ article_html | safe }}
   </div>
@@ -19,6 +23,7 @@
 
 <style>
 .article-page { max-width: 780px; margin: 0 auto; padding: 2rem 1rem; }
+.article-hero { width: 100%; border-radius: 12px; margin-bottom: 2rem; max-height: 400px; object-fit: cover; }
 .article-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
 .btn-copy { background: #e60023; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .btn-copy:hover { background: #c0001d; }
