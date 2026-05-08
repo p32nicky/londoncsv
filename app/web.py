@@ -1,8 +1,9 @@
 import logging
 import os
 from datetime import datetime, timezone, timedelta
-import anthropic
 from xml.etree.ElementTree import Element, SubElement, tostring
+import anthropic
+import httpx
 
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -10,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug
+from app.db import init_db, list_tours, get_latest_tours, get_tour_by_slug, save_article
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,6 +58,65 @@ async def tour_detail(request: Request, slug: str):
     })
 
 
+@app.get("/tour/{slug}/article", response_class=HTMLResponse)
+async def tour_article(request: Request, slug: str):
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return HTMLResponse("Tour not found", status_code=404)
+    existing = dict(tour).get("article_text")
+    if existing:
+        return templates.TemplateResponse("article.html", {
+            "request": request, "t": tour,
+            "article_html": existing,
+            "tour_url": f"{settings.site_url}/tour/{tour['slug']}",
+            "affiliate_link": tour["link"],
+            "site_title": settings.site_title,
+        })
+    return templates.TemplateResponse("article_loading.html", {
+        "request": request, "t": tour, "site_title": settings.site_title,
+    })
+
+
+@app.post("/api/generate-article/{slug}")
+async def generate_article(slug: str):
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return JSONResponse({"error": "ANTHROPIC_API_KEY not set"}, status_code=500)
+    try:
+        affiliate_link = tour["link"]
+        kw = tour.get("keywords", "") or tour["title"]
+        tags = " ".join(f"#{w.strip().replace(' ','').title()}" for w in kw.split(",") if w.strip())[:200]
+        if not tags:
+            tags = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
+        prompt = f"""Write a detailed SEO-optimised travel article about this London tour.
+Title: {tour['title']}
+Description: {tour['description']}
+Requirements: 500-600 words, H2 subheadings, engaging intro, tips, written in HTML using only <h1><h2><p><strong> tags, no html/head/body tags, catchy SEO h1 title."""
+
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-opus-4-7", "max_tokens": 800, "messages": [{"role": "user", "content": prompt}]},
+            timeout=55,
+        )
+        if resp.status_code != 200:
+            return JSONResponse({"error": resp.text}, status_code=500)
+        article_html = resp.json()["content"][0]["text"]
+        article_html += f"""
+<hr/>
+<h2>Book This Tour Today</h2>
+<p>Don't miss out! <strong><a href="{affiliate_link}" target="_blank" rel="nofollow noopener">Book {tour['title']} on Viator →</a></strong></p>
+<p>Secure your spot now — spaces fill up fast!</p>
+<p class="hashtags">{tags}</p>"""
+        save_article(settings.db_path, slug, article_html)
+        return JSONResponse({"status": "done"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @app.get("/feed.xml")
 async def rss_feed():
     day = datetime.now(timezone.utc).timetuple().tm_yday
@@ -96,7 +156,6 @@ async def rss_feed():
             media.set("url", t["image_url"])
             media.set("medium", "image")
 
-        # Today's date + space pins 2 hours apart
         dt = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0) + timedelta(hours=idx * 2)
         SubElement(item, "pubDate").text = dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
 
@@ -109,87 +168,6 @@ async def pinterest_verify():
     path = os.path.join(os.path.dirname(BASE_DIR), "pinterest-76b6f.html")
     with open(path, encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
-
-
-@app.get("/tour/{slug}/article", response_class=HTMLResponse)
-async def tour_article(request: Request, slug: str):
-    try:
-        tour = get_tour_by_slug(settings.db_path, slug)
-        if not tour:
-            return HTMLResponse("Tour not found", status_code=404)
-
-        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        if not api_key:
-            return HTMLResponse("<h1>Error</h1><pre>ANTHROPIC_API_KEY not set in Vercel environment variables</pre>", status_code=500)
-        logger.info(f"Using API key: {api_key[:12]}...{api_key[-4:]}")
-
-        client = anthropic.Anthropic(api_key=api_key)
-        tour_url = f"{settings.site_url}/tour/{tour['slug']}"
-        affiliate_link = tour["link"]
-        prompt = f"""Write a detailed SEO-optimised travel article about this London tour:
-
-Title: {tour['title']}
-Description: {tour['description']}
-Keywords: {tour.get('keywords', '')}
-Booking link: {affiliate_link}
-
-Requirements:
-- 600-800 words
-- SEO-heavy with natural keyword usage
-- H2 subheadings throughout
-- Engaging intro that hooks the reader
-- Describe what visitors experience, highlights, tips
-- Strong call-to-action paragraph at the end linking to: {affiliate_link}
-- End with 10 relevant hashtags on their own line (format: #London #Travel etc)
-- Write in HTML using <h1>, <h2>, <p>, <strong> tags only
-- Do NOT include <html>, <head>, <body> tags
-- The <h1> should be a catchy SEO title (not just the tour name)"""
-
-        import httpx
-        resp = httpx.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": "claude-sonnet-4-7",
-                "max_tokens": 1200,
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            timeout=60,
-        )
-        # Debug: list available models
-        if resp.status_code != 200:
-            return HTMLResponse(f"<h1>API Error {resp.status_code}</h1><pre>{resp.text}</pre>")
-        article_html = resp.json()["content"][0]["text"]
-
-        # Extract keywords for hashtags
-        kw = tour.get("keywords", "") or tour["title"]
-        tags = " ".join(f"#{w.strip().replace(' ','').title()}" for w in kw.split(",") if w.strip())[:200]
-        if not tags:
-            tags = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
-
-        # Append CTA + hashtags explicitly
-        article_html += f"""
-<hr/>
-<h2>Book This Tour Today</h2>
-<p>Don't miss out on this incredible London experience. <strong><a href="{affiliate_link}" target="_blank" rel="nofollow noopener">Click here to book {tour['title']} on Viator →</a></strong></p>
-<p>Secure your spot now — spaces fill up fast!</p>
-<p class="hashtags">{tags}</p>"""
-    except Exception as e:
-        key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
-        return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre><p>Key used: {key_preview}</p>", status_code=500)
-
-    return templates.TemplateResponse("article.html", {
-        "request": request,
-        "t": tour,
-        "article_html": article_html,
-        "tour_url": tour_url,
-        "affiliate_link": affiliate_link,
-        "site_title": settings.site_title,
-    })
 
 
 @app.get("/api/status")

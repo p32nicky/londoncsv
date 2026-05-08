@@ -168,6 +168,24 @@ def get_latest_tours(db_path: str, limit: int = 10, offset: int = 0):
         return _rows(conn, f"SELECT * FROM tours ORDER BY id LIMIT {ph} OFFSET {ph}", (limit, safe_offset))
 
 
+def save_article(db_path: str, slug: str, html: str) -> None:
+    ph = "%s" if USE_POSTGRES else "?"
+    with _get_conn(db_path) as conn:
+        if USE_POSTGRES:
+            conn.cursor().execute(
+                f"ALTER TABLE tours ADD COLUMN IF NOT EXISTS article_text TEXT"
+            )
+            conn.cursor().execute(
+                f"UPDATE tours SET article_text={ph} WHERE slug={ph}", (html, slug)
+            )
+        else:
+            try:
+                conn.execute("ALTER TABLE tours ADD COLUMN article_text TEXT")
+            except Exception:
+                pass
+            conn.execute("UPDATE tours SET article_text=? WHERE slug=?", (html, slug))
+
+
 def get_tour_by_slug(db_path: str, slug: str) -> Optional[dict]:
     ph = "%s" if USE_POSTGRES else "?"
     with _get_conn(db_path) as conn:
