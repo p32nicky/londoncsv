@@ -145,12 +145,23 @@ Requirements:
 - Do NOT include <html>, <head>, <body> tags
 - The <h1> should be a catchy SEO title (not just the tour name)"""
 
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}]
+        import httpx
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 1500,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=60,
         )
-        article_html = message.content[0].text
+        resp.raise_for_status()
+        article_html = resp.json()["content"][0]["text"]
     except Exception as e:
         key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
         return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre><p>Key used: {key_preview}</p>", status_code=500)
