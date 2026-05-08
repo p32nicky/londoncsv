@@ -238,14 +238,20 @@ def _tumblr_keys():
 
 @app.get("/tumblr/auth")
 async def tumblr_auth():
-    ck, cs = _tumblr_keys()
-    callback = f"{settings.site_url}/tumblr/callback"
-    oauth = OAuth1Session(ck, cs, callback_uri=callback)
-    r = oauth.fetch_request_token("https://www.tumblr.com/oauth/request_token")
-    save_setting(settings.db_path, "tumblr_req_token", r["oauth_token"])
-    save_setting(settings.db_path, "tumblr_req_secret", r["oauth_token_secret"])
-    auth_url = oauth.authorization_url("https://www.tumblr.com/oauth/authorize")
-    return RedirectResponse(auth_url)
+    try:
+        ck, cs = _tumblr_keys()
+        if not ck or not cs:
+            return JSONResponse({"error": "missing keys", "ck": bool(ck), "cs": bool(cs)})
+        callback = f"{settings.site_url}/tumblr/callback"
+        oauth = OAuth1Session(ck, cs, callback_uri=callback)
+        r = oauth.fetch_request_token("https://www.tumblr.com/oauth/request_token")
+        save_setting(settings.db_path, "tumblr_req_token", r["oauth_token"])
+        save_setting(settings.db_path, "tumblr_req_secret", r["oauth_token_secret"])
+        auth_url = oauth.authorization_url("https://www.tumblr.com/oauth/authorize")
+        return RedirectResponse(auth_url)
+    except Exception as e:
+        import traceback
+        return JSONResponse({"error": str(e), "trace": traceback.format_exc()}, status_code=500)
 
 
 @app.get("/tumblr/callback", response_class=HTMLResponse)
