@@ -160,8 +160,14 @@ Requirements:
             },
             timeout=60,
         )
+        # Debug: list available models
+        models_resp = httpx.get(
+            "https://api.anthropic.com/v1/models",
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+            timeout=10,
+        )
         if resp.status_code != 200:
-            return HTMLResponse(f"<h1>API Error {resp.status_code}</h1><pre>{resp.text}</pre><p>Key: {api_key[:12]}...{api_key[-4:]}</p>")
+            return HTMLResponse(f"<h1>API Error {resp.status_code}</h1><pre>{resp.text}</pre><p>Models endpoint: {models_resp.status_code} - {models_resp.text[:500]}</p>")
         article_html = resp.json()["content"][0]["text"]
     except Exception as e:
         key_preview = api_key[:12] + "..." + api_key[-4:] if api_key else "NOT SET"
