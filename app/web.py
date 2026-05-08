@@ -102,8 +102,11 @@ async def generate_article(slug: str):
         return JSONResponse({"error": "ANTHROPIC_API_KEY not set"}, status_code=500)
     try:
         affiliate_link = tour["link"]
-        kw = tour.get("keywords", "") or tour["title"]
-        tags = " ".join(f"#{w.strip().replace(' ','').title()}" for w in kw.split(",") if w.strip())[:200]
+        kw = tour.get("keywords", "") or ""
+        STOP = {"a","an","the","and","or","but","in","on","at","to","for","of","with","from","by","as","is","it","this","that","was","are","be","been","has","have","had","not","its"}
+        raw_words = [w.strip() for w in kw.split(",") if w.strip()] if kw else []
+        good = [w.replace(" ","") for w in raw_words if w.strip().lower() not in STOP and len(w.strip()) > 2]
+        tags = " ".join(f"#{w.title()}" for w in good if w)[:200]
         if not tags:
             tags = "#London #Travel #Tours #UK #VisitLondon #TravelUK #LondonTours #Viator #TravelGuide #UKTravel"
         prompt = f"""Write a highly detailed, SEO-optimised travel article about this London tour.
