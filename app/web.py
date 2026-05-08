@@ -344,11 +344,13 @@ async def post_tumblr(slug: str):
     community_uuid = get_setting(settings.db_path, f"tumblr_community_{blog}")
     blog_id = community_uuid if community_uuid else blog
 
-    # Try legacy endpoint first (supports HTML body)
+    payload = {"type": "text", "title": title, "body": article_html, "tags": tags}
+    if not community_uuid:
+        payload["state"] = "published"
     resp = httpx.post(
         f"https://api.tumblr.com/v2/blog/{blog_id}/post",
         headers={"Authorization": f"Bearer {token}"},
-        json={"type": "text", "title": title, "body": article_html, "tags": tags, "state": "published"},
+        json=payload,
         timeout=20,
     )
     logger.info(f"Tumblr post response: {resp.status_code} {resp.text[:300]}")
