@@ -113,14 +113,19 @@ async def pinterest_verify():
 
 @app.get("/tour/{slug}/article", response_class=HTMLResponse)
 async def tour_article(request: Request, slug: str):
-    tour = get_tour_by_slug(settings.db_path, slug)
-    if not tour:
-        return HTMLResponse("Tour not found", status_code=404)
+    try:
+        tour = get_tour_by_slug(settings.db_path, slug)
+        if not tour:
+            return HTMLResponse("Tour not found", status_code=404)
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-    tour_url = f"{settings.site_url}/tour/{tour['slug']}"
-    affiliate_link = tour["link"]
-    prompt = f"""Write a detailed SEO-optimised travel article about this London tour:
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return HTMLResponse("<h1>Error</h1><pre>ANTHROPIC_API_KEY not set in Vercel environment variables</pre>", status_code=500)
+
+        client = anthropic.Anthropic(api_key=api_key)
+        tour_url = f"{settings.site_url}/tour/{tour['slug']}"
+        affiliate_link = tour["link"]
+        prompt = f"""Write a detailed SEO-optimised travel article about this London tour:
 
 Title: {tour['title']}
 Description: {tour['description']}
@@ -139,7 +144,6 @@ Requirements:
 - Do NOT include <html>, <head>, <body> tags
 - The <h1> should be a catchy SEO title (not just the tour name)"""
 
-    try:
         message = client.messages.create(
             model="claude-3-5-haiku-20241022",
             max_tokens=1500,
