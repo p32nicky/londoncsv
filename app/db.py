@@ -189,11 +189,14 @@ def save_article(db_path: str, slug: str, html: str) -> None:
 def get_next_unpublished(db_path: str):
     """Get next tour that has no article or hasn't been posted to Tumblr."""
     with _get_conn(db_path) as conn:
-        try:
-            if not USE_POSTGRES:
+        # Ensure column exists
+        if USE_POSTGRES:
+            conn.cursor().execute("ALTER TABLE tours ADD COLUMN IF NOT EXISTS tumblr_posted_at TEXT")
+        else:
+            try:
                 conn.execute("ALTER TABLE tours ADD COLUMN tumblr_posted_at TEXT")
-        except Exception:
-            pass
+            except Exception:
+                pass
         return _one(conn,
             "SELECT * FROM tours WHERE (article_text IS NULL OR article_text = '') OR tumblr_posted_at IS NULL ORDER BY id LIMIT 1"
         )
