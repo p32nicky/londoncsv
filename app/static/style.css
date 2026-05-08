@@ -34,6 +34,8 @@ main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .btn-buy{display:inline-block;background:#8B1A1A;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1.05rem;align-self:flex-start;transition:background .15s}
 .btn-buy:hover{background:#6b1414}
 .affiliate-note{font-size:.78rem;color:#999}
+.btn-article{display:inline-block;background:#2c7a4b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;align-self:flex-start;transition:background .15s}
+.btn-article:hover{background:#1e5c38}
 .back-link{display:inline-block;margin-top:32px;color:#8B1A1A;text-decoration:none;font-weight:600}
 footer{text-align:center;padding:20px;font-size:.82rem;color:#888;border-top:1px solid #e0d8cc;margin-top:auto}
 footer a{color:#8B1A1A}

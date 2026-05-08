@@ -110,6 +110,52 @@ async def pinterest_verify():
         return HTMLResponse(content=f.read())
 
 
+@app.get("/tour/{slug}/article", response_class=HTMLResponse)
+async def tour_article(request: Request, slug: str):
+    import anthropic
+    tour = get_tour_by_slug(settings.db_path, slug)
+    if not tour:
+        return HTMLResponse("Tour not found", status_code=404)
+
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    tour_url = f"{settings.site_url}/tour/{tour['slug']}"
+    affiliate_link = tour["link"]
+    prompt = f"""Write a detailed SEO-optimised travel article about this London tour:
+
+Title: {tour['title']}
+Description: {tour['description']}
+Keywords: {tour.get('keywords', '')}
+Booking link: {affiliate_link}
+
+Requirements:
+- 600-800 words
+- SEO-heavy with natural keyword usage
+- H2 subheadings throughout
+- Engaging intro that hooks the reader
+- Describe what visitors experience, highlights, tips
+- Strong call-to-action paragraph at the end linking to: {affiliate_link}
+- End with 10 relevant hashtags on their own line (format: #London #Travel etc)
+- Write in HTML using <h1>, <h2>, <p>, <strong> tags only
+- Do NOT include <html>, <head>, <body> tags
+- The <h1> should be a catchy SEO title (not just the tour name)"""
+
+    message = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=1500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    article_html = message.content[0].text
+
+    return templates.TemplateResponse("article.html", {
+        "request": request,
+        "t": tour,
+        "article_html": article_html,
+        "tour_url": tour_url,
+        "affiliate_link": affiliate_link,
+        "site_title": settings.site_title,
+    })
+
+
 @app.get("/api/status")
 async def status():
     _, total = list_tours(settings.db_path, per_page=1)

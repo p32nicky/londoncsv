@@ -8,7 +8,7 @@
     {% endif %}
   </div>
   <div class="product-info">
-    <span class="badge">Rome Experience</span>
+    <span class="badge">London Experience</span>
     <h1>{{ t.title }}</h1>
     {% if t.description %}
     <p class="desc">{{ t.description }}</p>
@@ -19,6 +19,7 @@
     <a href="{{ t.link }}" class="btn-buy" target="_blank" rel="nofollow noopener">
       Book on Viator →
     </a>
+    <a href="/tour/{{ t.slug }}/article" class="btn-article">✍️ Write Article</a>
     <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
   </div>
 </div>
