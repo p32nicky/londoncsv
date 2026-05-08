@@ -242,7 +242,7 @@ async def tumblr_auth():
         ck, cs = _tumblr_keys()
         if not ck or not cs:
             return JSONResponse({"error": "missing keys", "ck": bool(ck), "cs": bool(cs)})
-        callback = f"{settings.site_url}/tumblr/callback"
+        callback = "https://londoncsv.vercel.app/tumblr/callback"
         oauth = OAuth1Session(ck, cs, callback_uri=callback)
         r = oauth.fetch_request_token("https://www.tumblr.com/oauth/request_token")
         save_setting(settings.db_path, "tumblr_req_token", r["oauth_token"])
