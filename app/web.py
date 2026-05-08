@@ -292,6 +292,23 @@ async def tumblr_callback(code: str = "", state: str = "", error: str = ""):
         return HTMLResponse(f"<h2>❌ Error</h2><pre>{e}</pre>", status_code=500)
 
 
+@app.get("/tumblr/set-blog", response_class=HTMLResponse)
+async def tumblr_set_blog(name: str = ""):
+    if name:
+        save_setting(settings.db_path, "tumblr_blog_name", name.strip())
+        return HTMLResponse(f"<h2>✅ Blog set to <strong>{name}</strong></h2><p><a href='/'>← Back</a></p>")
+    current = get_setting(settings.db_path, "tumblr_blog_name") or ""
+    return HTMLResponse(f"""
+    <html><body style="font-family:sans-serif;max-width:500px;margin:4rem auto;padding:1rem">
+    <h2>Set Tumblr Blog</h2>
+    <p>Current: <strong>{current}</strong></p>
+    <form method="get">
+      <input name="name" value="{current}" style="padding:0.5rem;width:100%;font-size:1rem;margin-bottom:1rem"/>
+      <button type="submit" style="background:#35465c;color:#fff;padding:0.6rem 1.2rem;border:none;border-radius:6px;font-size:1rem;cursor:pointer">Save</button>
+    </form>
+    </body></html>""")
+
+
 @app.post("/api/post-tumblr/{slug}")
 async def post_tumblr(slug: str):
     import re
