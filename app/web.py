@@ -159,7 +159,7 @@ Requirements:
         resp = httpx.post(
             "https://api.anthropic.com/v1/messages",
             headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-            json={"model": "claude-opus-4-7", "max_tokens": 1800, "messages": [{"role": "user", "content": prompt}]},
+            json={"model": "claude-haiku-4-5", "max_tokens": 1800, "messages": [{"role": "user", "content": prompt}]},
             timeout=55,
         )
         if resp.status_code != 200:
