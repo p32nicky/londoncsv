@@ -139,12 +139,15 @@ Requirements:
 - Do NOT include <html>, <head>, <body> tags
 - The <h1> should be a catchy SEO title (not just the tour name)"""
 
-    message = client.messages.create(
-        model="claude-haiku-4-5",
-        max_tokens=1500,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    article_html = message.content[0].text
+    try:
+        message = client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        article_html = message.content[0].text
+    except Exception as e:
+        return HTMLResponse(f"<h1>Error generating article</h1><pre>{e}</pre>", status_code=500)
 
     return templates.TemplateResponse("article.html", {
         "request": request,
