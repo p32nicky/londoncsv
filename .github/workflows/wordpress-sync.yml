@@ -23,4 +23,4 @@ jobs:
           WP_ACCESS_TOKEN: ${{ secrets.WP_ACCESS_TOKEN }}
           BITLY_TOKEN: ${{ secrets.BITLY_TOKEN }}
           SITE_URL: https://londoncsv.vercel.app
-          WP_BATCH: "1"
+          WP_BATCH: "80"
