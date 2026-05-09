@@ -21,11 +21,15 @@ for i, post in enumerate(posts):
     if not wp_url or not post_id:
         continue
 
-    # Skip if already has medium button
-    if "medium.com/p/import" in content:
-        continue
-
-    updated = content + _medium_button(wp_url)
+    # Replace old ?url= button or append if missing
+    old_button_pattern = r'\n?<p><strong><a href="https://medium\.com/p/import\?url=[^"]*">.*?</a></strong></p>'
+    import re
+    if re.search(old_button_pattern, content):
+        updated = re.sub(old_button_pattern, _medium_button(), content)
+    elif "medium.com/p/import" not in content:
+        updated = content + _medium_button()
+    else:
+        continue  # already correct
     result = update_post(WP_ACCESS_TOKEN, post_id, updated)
     if result.get("ok"):
         ok += 1
