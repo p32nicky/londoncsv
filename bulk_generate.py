@@ -52,18 +52,27 @@ Requirements:
 - HTML only: <h1> <h2> <p> <strong> <ul> <li> tags
 - No <html><head><body> tags"""
 
-    resp = httpx.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-        json={
-            "model": "llama-3.3-70b-versatile",
-            "max_tokens": 1800,
-            "messages": [{"role": "user", "content": prompt}],
-        },
-        timeout=60,
-    )
-    if resp.status_code != 200:
-        raise RuntimeError(resp.text[:300])
+    for attempt in range(5):
+        resp = httpx.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.1-8b-instant",
+                "max_tokens": 1800,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=60,
+        )
+        if resp.status_code == 429:
+            wait = 10 * (attempt + 1)
+            print(f"  rate limit, waiting {wait}s...")
+            time.sleep(wait)
+            continue
+        if resp.status_code != 200:
+            raise RuntimeError(resp.text[:300])
+        break
+    else:
+        raise RuntimeError("Rate limit exceeded after 5 retries")
     html = resp.json()["choices"][0]["message"]["content"]
     html += f"""
 <hr/>
