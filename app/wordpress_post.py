@@ -28,8 +28,9 @@ def _clean_html(html: str, image_url: str = "") -> str:
     return clean.strip()
 
 
-def _medium_button(wp_url: str = "") -> str:
-    return f'\n<p><strong><a href="https://medium.com/p/import">Import this article to Medium →</a></strong></p>'
+def _medium_button(slug: str = "") -> str:
+    url = f"https://londoncsv.vercel.app/tour/{slug}/medium" if slug else "https://londoncsv.vercel.app"
+    return f'\n<p><strong><a href="{url}">Import this article to Medium →</a></strong></p>'
 
 
 def update_post(access_token: str, post_id: str, content: str) -> dict:
@@ -94,9 +95,10 @@ def post_article(access_token: str, tour: dict, article_html: str) -> dict:
             wp_url = data.get("URL", "")
             post_id = data.get("ID", "")
 
-            # Update post to add Medium import button now that we have the URL
+            # Update post to add Medium import button
             if wp_url and post_id:
-                updated_content = clean_content + _medium_button(wp_url)
+                slug = tour.get("slug", "")
+                updated_content = clean_content + _medium_button(slug)
                 update_post(access_token, post_id, updated_content)
 
             return {"url": wp_url, "id": post_id}
