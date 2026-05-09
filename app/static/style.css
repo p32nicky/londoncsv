@@ -11,6 +11,14 @@ nav{display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end;fle
 .btn-rss{background:#f26522;color:#fff;text-decoration:none}
 main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .expedia-banner{padding:20px 0 8px;margin-bottom:8px}
+.amazon-book{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid #e0d8cc;border-radius:12px;padding:16px 20px;margin:24px 0;text-decoration:none;color:#222;transition:box-shadow .2s}
+.amazon-book:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.amazon-book img{width:80px;height:auto;border-radius:6px;flex-shrink:0;object-fit:cover}
+.amazon-book-info{display:flex;flex-direction:column;gap:4px}
+.amazon-book-label{font-size:.8rem;color:#888;margin:0}
+.amazon-book-title{font-size:1rem;font-weight:700;margin:0}
+.amazon-book-cta{display:inline-block;background:#FF9900;color:#fff;padding:6px 14px;border-radius:6px;font-size:.85rem;font-weight:700;width:fit-content;margin-top:4px}
+.amazon-book-note{font-size:.75rem;color:#aaa;margin:4px 0 0}
 .expedia-widget{margin-bottom:24px;border-radius:12px;overflow:hidden}
 .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .count{color:#666;font-size:.9rem}
