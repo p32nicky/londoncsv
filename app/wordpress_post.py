@@ -28,9 +28,8 @@ def _clean_html(html: str, image_url: str = "") -> str:
     return clean.strip()
 
 
-def _medium_button(wp_url: str) -> str:
-    import_url = f"https://medium.com/p/import?url={wp_url}"
-    return f'\n<p><strong><a href="{import_url}">Import this article to Medium →</a></strong></p>'
+def _medium_button(wp_url: str = "") -> str:
+    return f'\n<p><strong><a href="https://medium.com/p/import">Import this article to Medium →</a></strong></p>'
 
 
 def update_post(access_token: str, post_id: str, content: str) -> dict:
