@@ -7,6 +7,9 @@
 </head>
 <body>
 <article>
+{% if t.image_url %}
+<img src="{{ t.image_url }}" alt="{{ t.title }}"/>
+{% endif %}
 {{ article_html | safe }}
 </article>
 </body>
