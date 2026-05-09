@@ -17,6 +17,21 @@ def _strip_tags(html: str) -> str:
     return re.sub(r"<[^>]+>", "", html or "").strip()
 
 
+def _clean_html(html: str, image_url: str = "") -> str:
+    """Clean HTML for Medium compatibility when imported from WordPress."""
+    clean = html
+    # Remove hr tags
+    clean = re.sub(r'<hr\s*/?>', '', clean)
+    # Remove hashtag paragraph
+    clean = re.sub(r'<p[^>]*class="hashtags"[^>]*>.*?</p>', '', clean, flags=re.DOTALL)
+    # Strip class attributes from all tags
+    clean = re.sub(r'(<[a-z]+)\s+class="[^"]*"', r'\1', clean)
+    # Prepend image at top of content so Medium sees it
+    if image_url:
+        clean = f'<img src="{image_url}" alt=""/>\n' + clean
+    return clean.strip()
+
+
 def post_article(access_token: str, tour: dict, article_html: str) -> dict:
     """
     Post a single article to WordPress.com.
@@ -33,19 +48,17 @@ def post_article(access_token: str, tour: dict, article_html: str) -> dict:
     excerpt_match = re.search(r"</h1>\s*<p>(.*?)</p>", article_html, re.IGNORECASE | re.DOTALL)
     excerpt = _strip_tags(excerpt_match.group(1))[:300] if excerpt_match else tour.get("description", "")[:300]
 
+    image_url = tour.get("image_url", "")
+    clean_content = _clean_html(article_html, image_url)
+
     payload = {
         "title": title,
-        "content": article_html,
+        "content": clean_content,
         "status": "publish",
         "tags": ",".join(tags[:15]),
         "excerpt": excerpt,
         "format": "standard",
     }
-
-    # Featured image from tour
-    image_url = tour.get("image_url", "")
-    if image_url:
-        payload["featured_image"] = image_url
 
     try:
         resp = httpx.post(
