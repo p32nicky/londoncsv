@@ -198,7 +198,7 @@ def get_next_unpublished(db_path: str):
             except Exception:
                 pass
         return _one(conn,
-            "SELECT * FROM tours WHERE (article_text IS NULL OR article_text = '') OR tumblr_posted_at IS NULL ORDER BY id LIMIT 1"
+            "SELECT * FROM tours WHERE article_text IS NOT NULL AND article_text != '' AND tumblr_posted_at IS NULL ORDER BY id LIMIT 1"
         )
 
 
