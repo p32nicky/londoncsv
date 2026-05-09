@@ -98,16 +98,22 @@ async def tour_article(request: Request, slug: str):
 
 @app.get("/tour/{slug}/medium", response_class=HTMLResponse)
 async def tour_medium(request: Request, slug: str):
+    import re as _re
     tour = get_tour_by_slug(settings.db_path, slug)
     if not tour:
         return HTMLResponse("Tour not found", status_code=404)
     existing = dict(tour).get("article_text")
     if not existing:
         return HTMLResponse("Article not yet generated. Visit /tour/{}/article first.".format(slug), status_code=404)
+    # Strip elements Medium chokes on
+    clean = existing
+    clean = _re.sub(r'<hr\s*/?>', '', clean)                          # remove <hr>
+    clean = _re.sub(r'<p[^>]*class="hashtags"[^>]*>.*?</p>', '', clean, flags=_re.DOTALL)  # remove hashtag line
+    clean = _re.sub(r'<([a-z]+)\s+[^>]*class="[^"]*"[^>]*>', r'<\1>', clean)  # strip class attrs
     return templates.TemplateResponse("article_medium.html", {
         "request": request,
         "t": tour,
-        "article_html": existing,
+        "article_html": clean,
     })
 
 
