@@ -464,12 +464,20 @@ Requirements:
 
 @app.get("/api/auto-publish-status")
 async def auto_publish_status():
-    _, total = list_tours(settings.db_path, per_page=1)
+    from app.db import _get_conn, _one, USE_POSTGRES
     next_tour = get_next_unpublished(settings.db_path)
+    with _get_conn(settings.db_path) as conn:
+        if USE_POSTGRES:
+            total = (_one(conn, "SELECT COUNT(*) as c FROM tours") or {}).get("c") or 0
+            posted = (_one(conn, "SELECT COUNT(*) as c FROM tours WHERE tumblr_posted_at IS NOT NULL") or {}).get("c") or 0
+        else:
+            total = (_one(conn, "SELECT COUNT(*) FROM tours") or [0])[0]
+            posted = (_one(conn, "SELECT COUNT(*) FROM tours WHERE tumblr_posted_at IS NOT NULL") or [0])[0]
     return JSONResponse({
         "total": total,
-        "next_up": next_tour["title"] if next_tour else None,
-        "remaining": "unknown - check DB directly",
+        "posted": posted,
+        "remaining": total - posted,
+        "next_up": next_tour["title"] if next_tour else "All done!",
     })
 
 
