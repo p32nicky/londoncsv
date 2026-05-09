@@ -11,6 +11,7 @@ nav{display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end;fle
 .btn-rss{background:#f26522;color:#fff;text-decoration:none}
 main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .expedia-banner{padding:20px 0 8px;margin-bottom:8px}
+@media(max-width:768px){.expedia-banner{display:none}}
 .amazon-book{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid #e0d8cc;border-radius:12px;padding:16px 20px;margin:24px 0;text-decoration:none;color:#222;transition:box-shadow .2s}
 .amazon-book:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .amazon-book img{width:80px;height:auto;border-radius:6px;flex-shrink:0;object-fit:cover}
