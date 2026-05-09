@@ -20,16 +20,36 @@ def _strip_tags(html: str) -> str:
 def _clean_html(html: str, image_url: str = "") -> str:
     """Clean HTML for Medium compatibility when imported from WordPress."""
     clean = html
-    # Remove hr tags
     clean = re.sub(r'<hr\s*/?>', '', clean)
-    # Remove hashtag paragraph
     clean = re.sub(r'<p[^>]*class="hashtags"[^>]*>.*?</p>', '', clean, flags=re.DOTALL)
-    # Strip class attributes from all tags
     clean = re.sub(r'(<[a-z]+)\s+class="[^"]*"', r'\1', clean)
-    # Prepend image at top of content so Medium sees it
     if image_url:
         clean = f'<img src="{image_url}" alt=""/>\n' + clean
     return clean.strip()
+
+
+def _medium_button(wp_url: str) -> str:
+    import_url = f"https://medium.com/p/import?url={wp_url}"
+    return f'\n<p><strong><a href="{import_url}">Import this article to Medium →</a></strong></p>'
+
+
+def update_post(access_token: str, post_id: str, content: str) -> dict:
+    """Update an existing WordPress post's content."""
+    try:
+        resp = httpx.post(
+            f"{API_BASE}/posts/{post_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={"content": content},
+            timeout=20,
+        )
+        if resp.status_code in (200, 201):
+            return {"ok": True}
+        return {"error": resp.text[:300]}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def post_article(access_token: str, tour: dict, article_html: str) -> dict:
@@ -44,7 +64,6 @@ def post_article(access_token: str, tour: dict, article_html: str) -> dict:
     tags_text = tags_match.group(1) if tags_match else ""
     tags = [t.lstrip("#") for t in tags_text.split() if t.startswith("#")]
 
-    # Extract excerpt — first <p> after <h1>
     excerpt_match = re.search(r"</h1>\s*<p>(.*?)</p>", article_html, re.IGNORECASE | re.DOTALL)
     excerpt = _strip_tags(excerpt_match.group(1))[:300] if excerpt_match else tour.get("description", "")[:300]
 
@@ -73,10 +92,42 @@ def post_article(access_token: str, tour: dict, article_html: str) -> dict:
         logger.info(f"WordPress post status={resp.status_code} for '{title[:50]}'")
         if resp.status_code in (200, 201):
             data = resp.json()
-            return {"url": data.get("URL", ""), "id": data.get("ID", "")}
+            wp_url = data.get("URL", "")
+            post_id = data.get("ID", "")
+
+            # Update post to add Medium import button now that we have the URL
+            if wp_url and post_id:
+                updated_content = clean_content + _medium_button(wp_url)
+                update_post(access_token, post_id, updated_content)
+
+            return {"url": wp_url, "id": post_id}
         else:
             logger.error(f"WordPress error: {resp.text[:300]}")
             return {"error": resp.text[:300]}
     except Exception as e:
         logger.error(f"WordPress exception: {e}")
         return {"error": str(e)}
+
+
+def get_all_posts(access_token: str) -> list:
+    """Fetch all published posts from WordPress."""
+    posts = []
+    offset = 0
+    while True:
+        resp = httpx.get(
+            f"{API_BASE}/posts",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"status": "publish", "number": 100, "offset": offset, "fields": "ID,URL,content"},
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            break
+        data = resp.json()
+        batch = data.get("posts", [])
+        if not batch:
+            break
+        posts.extend(batch)
+        offset += len(batch)
+        if len(batch) < 100:
+            break
+    return posts
