@@ -6,7 +6,7 @@ import os
 import re
 import requests
 
-PUBLICATION = "nickmdavies.substack.com"
+PUBLICATION = "explorelondon.substack.com"
 API_BASE = f"https://{PUBLICATION}/api/v1"
 SESSION_COOKIE = os.environ.get("SUBSTACK_SID", "")
 
