@@ -21,7 +21,7 @@ def get_next_unposted(n=1):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT slug, title, description, link, keywords, image_url
+        SELECT slug, title, description, link, keywords, image_url, article_text
         FROM tours
         WHERE tumblr_posted_at IS NULL
         ORDER BY id
