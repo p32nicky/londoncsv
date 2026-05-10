@@ -48,7 +48,6 @@ def post_tour(tour: dict) -> dict:
     caption = f"<b>{title}</b>"
     caption += f"<br/><br/>{description}"
     caption += f"<br/><br/><a href=\"{link}\">👉 Book this tour on Viator</a>"
-    caption += f"<br/><a href=\"{medium_url}\">📖 Import this article to Medium</a>"
 
     data = {
         "type": "photo",
