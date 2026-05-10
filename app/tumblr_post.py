@@ -45,22 +45,18 @@ def post_tour(tour: dict) -> dict:
     slug = tour.get("slug", "")
     medium_url = f"https://londoncsv.vercel.app/tour/{slug}/medium" if slug else link
 
-    article_text = tour.get("article_text", "") or ""
-
-    # Build full body: image + article or fallback to description
-    img_tag = f'<img src="{image_url}"/><br/>' if image_url else ""
-    if article_text:
-        body = img_tag + article_text
-    else:
-        body = img_tag + f"<p>{description}</p>"
-    body += f'<p><a href="{link}">👉 Book this tour on Viator</a></p>'
+    caption = f"<b>{title}</b>"
+    caption += f"<br/><br/>{description}"
+    caption += f"<br/><br/><a href=\"{link}\">👉 Book this tour on Viator</a>"
 
     data = {
-        "type": "text",
-        "title": title,
-        "body": body,
+        "type": "photo",
+        "caption": caption[:2000],
         "tags": tags_str,
+        "link": link,
     }
+    if image_url:
+        data["source"] = image_url
 
     try:
         resp = requests.post(API_URL, data=data, auth=_auth(), timeout=15)
