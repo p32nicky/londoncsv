@@ -3,8 +3,7 @@ name: Tumblr Sync
 on:
   schedule:
     - cron: '0 9 * * *'
-    - cron: '0 13 * * *'
-    - cron: '0 17 * * *'
+    - cron: '0 18 * * *'
   workflow_dispatch:
 
 jobs:
