@@ -53,5 +53,19 @@ main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .btn-article{display:inline-block;background:#2c7a4b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;align-self:flex-start;transition:background .15s}
 .btn-article:hover{background:#1e5c38}
 .back-link{display:inline-block;margin-top:32px;color:#8B1A1A;text-decoration:none;font-weight:600}
+.tour-layout{display:grid;grid-template-columns:1fr 160px;gap:32px;align-items:start}
+@media(max-width:900px){.tour-layout{grid-template-columns:1fr}}
+.tour-main{}
+.tour-sidebar{}
+.sidebar-sticky{position:sticky;top:80px}
+.amazon-sky{display:flex;flex-direction:column;align-items:center;background:#fff;border:1px solid #e0d8cc;border-radius:12px;padding:14px 10px;text-decoration:none;color:#222;gap:10px;transition:box-shadow .2s}
+.amazon-sky:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.amazon-sky img{width:120px;height:auto;border-radius:6px}
+.amazon-sky-info{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.amazon-sky-label{font-size:.75rem;color:#888;margin:0}
+.amazon-sky-title{font-size:.9rem;font-weight:700;margin:0}
+.amazon-sky-sub{font-size:.78rem;color:#666;margin:0;font-style:italic}
+.amazon-sky-cta{display:inline-block;background:#FF9900;color:#fff;padding:6px 10px;border-radius:6px;font-size:.8rem;font-weight:700;margin-top:4px}
+.amazon-sky-note{font-size:.7rem;color:#aaa;margin:0}
 footer{text-align:center;padding:20px;font-size:.82rem;color:#888;border-top:1px solid #e0d8cc;margin-top:auto}
 footer a{color:#8B1A1A}

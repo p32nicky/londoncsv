@@ -5,47 +5,53 @@
   <div class="eg-affiliate-banners" data-program="us-expedia" data-network="pz" data-layout="leaderboard" data-image="castle" data-message="search-hotels-flights-cars-activities-more" data-camref="1101l3NUFq" data-pubref="" data-link="activities"></div>
   <script class="eg-affiliate-banners-script" src="https://creator.expediagroup.com/products/banners/assets/eg-affiliate-banners.js"></script>
 </div>
-<div class="product-page">
-  <div class="product-img-wrap">
-    {% if t.image_url %}
-    <img src="{{ t.image_url }}" alt="{{ t.title }}"/>
-    {% endif %}
-  </div>
-  <div class="product-info">
-    <span class="badge">London Experience</span>
-    <h1>{{ t.title }}</h1>
-    {% if t.description %}
-    <p class="desc">{{ t.description }}</p>
-    {% endif %}
-    {% if t.keywords %}
-    <p class="keywords">🏷️ {{ t.keywords }}</p>
-    {% endif %}
-    <a href="{{ t.link }}" class="btn-buy" target="_blank" rel="nofollow noopener">
-      Book on Viator →
-    </a>
-    <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
+<div class="tour-layout">
+  <div class="tour-main">
+    <div class="product-page">
+      <div class="product-img-wrap">
+        {% if t.image_url %}
+        <img src="{{ t.image_url }}" alt="{{ t.title }}"/>
+        {% endif %}
+      </div>
+      <div class="product-info">
+        <span class="badge">London Experience</span>
+        <h1>{{ t.title }}</h1>
+        {% if t.description %}
+        <p class="desc">{{ t.description }}</p>
+        {% endif %}
+        {% if t.keywords %}
+        <p class="keywords">🏷️ {{ t.keywords }}</p>
+        {% endif %}
+        <a href="{{ t.link }}" class="btn-buy" target="_blank" rel="nofollow noopener">
+          Book on Viator →
+        </a>
+        <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
+        <div class="expedia-widget">
+          <div class="eg-widget" data-widget="search" data-program="us-expedia" data-lobs="stays,flights" data-network="pz" data-camref="1101l3NUFq" data-pubref=""></div>
+          <script class="eg-widgets-script" src="https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js"></script>
+        </div>
+      </div>
+    </div>
     {% if t.article_text %}
     <div class="article-body">
       {{ t.article_text | safe }}
     </div>
-    <a href="{{ t.link }}" class="btn-buy" target="_blank" rel="nofollow noopener">
-      Book on Viator →
-    </a>
     {% endif %}
-    <div class="expedia-widget">
-      <div class="eg-widget" data-widget="search" data-program="us-expedia" data-lobs="stays,flights" data-network="pz" data-camref="1101l3NUFq" data-pubref=""></div>
-      <script class="eg-widgets-script" src="https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js"></script>
-    </div>
-    <a class="amazon-book" href="https://amzn.to/3RdygLv" target="_blank" rel="nofollow noopener">
-      <img src="https://m.media-amazon.com/images/I/91oyogye99L._SL1500_.jpg" alt="Rick Steves London"/>
-      <div class="amazon-book-info">
-        <p class="amazon-book-label">📚 Recommended Read</p>
-        <p class="amazon-book-title">Rick Steves London <em>(Rick Steves Travel Guide)</em></p>
-        <span class="amazon-book-cta">View on Amazon →</span>
-        <p class="amazon-book-note">Affiliate link — we may earn a small commission</p>
-      </div>
-    </a>
+    <a href="/" class="back-link">← Back to all tours</a>
   </div>
+  <aside class="tour-sidebar">
+    <div class="sidebar-sticky">
+      <a class="amazon-sky" href="https://amzn.to/3RdygLv" target="_blank" rel="nofollow noopener">
+        <p class="amazon-sky-label">📚 Recommended Read</p>
+        <img src="https://m.media-amazon.com/images/I/91oyogye99L._SL1500_.jpg" alt="Rick Steves London"/>
+        <div class="amazon-sky-info">
+          <p class="amazon-sky-title">Rick Steves London</p>
+          <p class="amazon-sky-sub">Rick Steves Travel Guide</p>
+          <span class="amazon-sky-cta">View on Amazon →</span>
+          <p class="amazon-sky-note">Affiliate link</p>
+        </div>
+      </a>
+    </div>
+  </aside>
 </div>
-<a href="/" class="back-link">← Back to all tours</a>
 {% endblock %}

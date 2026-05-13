@@ -65,14 +65,35 @@ async def index(
     })
 
 
+def _clean_article(html: str) -> str:
+    """Strip bare markdown # lines and convert any remaining markdown headings to HTML."""
+    import re
+    lines = html.splitlines()
+    out = []
+    for line in lines:
+        # Remove lines that are only hashes/whitespace (e.g. "# " with no title)
+        if re.match(r'^#{1,6}\s*$', line):
+            continue
+        # Convert markdown headings to HTML
+        m = re.match(r'^(#{1,6})\s+(.+)$', line)
+        if m:
+            level = len(m.group(1))
+            line = f"<h{level}>{m.group(2)}</h{level}>"
+        out.append(line)
+    return "\n".join(out)
+
+
 @app.get("/tour/{slug}", response_class=HTMLResponse)
 async def tour_detail(request: Request, slug: str):
     tour = get_tour_by_slug(settings.db_path, slug)
     if not tour:
         return HTMLResponse("Tour not found", status_code=404)
+    t = dict(tour)
+    if t.get("article_text"):
+        t["article_text"] = _clean_article(t["article_text"])
     return templates.TemplateResponse("tour.html", {
         "request": request,
-        "t": tour,
+        "t": t,
         "site_title": settings.site_title,
     })
 
