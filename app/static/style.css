@@ -36,6 +36,8 @@ main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .empty{text-align:center;padding:60px 20px;color:#666}
 .product-page{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
 @media(max-width:700px){.product-page{grid-template-columns:1fr}}
+.product-top{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+@media(max-width:700px){.product-top{grid-template-columns:1fr}}
 .product-img-wrap img{width:100%;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
 .product-info{display:flex;flex-direction:column;gap:16px}
 .badge{display:inline-block;background:#8B1A1A;color:#fff;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;align-self:flex-start}
@@ -53,8 +55,9 @@ main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .btn-article{display:inline-block;background:#2c7a4b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;align-self:flex-start;transition:background .15s}
 .btn-article:hover{background:#1e5c38}
 .back-link{display:inline-block;margin-top:32px;color:#8B1A1A;text-decoration:none;font-weight:600}
-.tour-layout{display:grid;grid-template-columns:1fr 160px;gap:32px;align-items:start}
+.tour-layout{display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start}
 @media(max-width:900px){.tour-layout{grid-template-columns:1fr}}
+.expedia-widget-side{margin-bottom:20px;border-radius:12px;overflow:hidden}
 .tour-main{}
 .tour-sidebar{}
 .sidebar-sticky{position:sticky;top:80px}

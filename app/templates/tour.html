@@ -7,7 +7,7 @@
 </div>
 <div class="tour-layout">
   <div class="tour-main">
-    <div class="product-page">
+    <div class="product-top">
       <div class="product-img-wrap">
         {% if t.image_url %}
         <img src="{{ t.image_url }}" alt="{{ t.title }}"/>
@@ -26,10 +26,6 @@
           Book on Viator →
         </a>
         <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
-        <div class="expedia-widget">
-          <div class="eg-widget" data-widget="search" data-program="us-expedia" data-lobs="stays,flights" data-network="pz" data-camref="1101l3NUFq" data-pubref=""></div>
-          <script class="eg-widgets-script" src="https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js"></script>
-        </div>
       </div>
     </div>
     {% if t.article_text %}
@@ -41,6 +37,10 @@
   </div>
   <aside class="tour-sidebar">
     <div class="sidebar-sticky">
+      <div class="expedia-widget-side">
+        <div class="eg-widget" data-widget="search" data-program="us-expedia" data-lobs="stays,flights" data-network="pz" data-camref="1101l3NUFq" data-pubref=""></div>
+        <script class="eg-widgets-script" src="https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js"></script>
+      </div>
       <a class="amazon-sky" href="https://amzn.to/3RdygLv" target="_blank" rel="nofollow noopener">
         <p class="amazon-sky-label">📚 Recommended Read</p>
         <img src="https://m.media-amazon.com/images/I/91oyogye99L._SL1500_.jpg" alt="Rick Steves London"/>
