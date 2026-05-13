@@ -26,13 +26,13 @@
           Book on Viator →
         </a>
         <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
+        {% if t.article_text %}
+        <div class="article-body">
+          {{ t.article_text | safe }}
+        </div>
+        {% endif %}
       </div>
     </div>
-    {% if t.article_text %}
-    <div class="article-body">
-      {{ t.article_text | safe }}
-    </div>
-    {% endif %}
     <a href="/" class="back-link">← Back to all tours</a>
   </div>
   <aside class="tour-sidebar">

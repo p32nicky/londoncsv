@@ -66,12 +66,13 @@ async def index(
 
 
 def _clean_article(html: str) -> str:
-    """Strip bare markdown # lines and convert any remaining markdown headings to HTML."""
+    """Strip bare markdown # lines, convert markdown headings, remove first h1/h2 (duplicate title)."""
     import re
     lines = html.splitlines()
     out = []
+    stripped_first_heading = False
     for line in lines:
-        # Remove lines that are only hashes/whitespace (e.g. "# " with no title)
+        # Remove lines that are only hashes/whitespace
         if re.match(r'^#{1,6}\s*$', line):
             continue
         # Convert markdown headings to HTML
@@ -79,6 +80,10 @@ def _clean_article(html: str) -> str:
         if m:
             level = len(m.group(1))
             line = f"<h{level}>{m.group(2)}</h{level}>"
+        # Remove first h1 or h2 tag (duplicate of page title)
+        if not stripped_first_heading and re.match(r'^<h[12][^>]*>', line, re.IGNORECASE):
+            stripped_first_heading = True
+            continue
         out.append(line)
     return "\n".join(out)
 
