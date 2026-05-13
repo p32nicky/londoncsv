@@ -24,6 +24,14 @@
       Book on Viator →
     </a>
     <p class="affiliate-note">Affiliate link — we may earn a commission at no extra cost to you.</p>
+    {% if t.article_text %}
+    <div class="article-body">
+      {{ t.article_text | safe }}
+    </div>
+    <a href="{{ t.link }}" class="btn-buy" target="_blank" rel="nofollow noopener">
+      Book on Viator →
+    </a>
+    {% endif %}
     <div class="expedia-widget">
       <div class="eg-widget" data-widget="search" data-program="us-expedia" data-lobs="stays,flights" data-network="pz" data-camref="1101l3NUFq" data-pubref=""></div>
       <script class="eg-widgets-script" src="https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js"></script>
