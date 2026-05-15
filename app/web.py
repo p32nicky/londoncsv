@@ -256,6 +256,21 @@ async def rss_feed():
     return Response(content=xml_str, media_type="application/rss+xml")
 
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    base = "https://londoncsv.vercel.app"
+    all_tours = get_latest_tours(settings.db_path, limit=99999, offset=0)
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+             f'  <url><loc>{base}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>']
+    for t in all_tours:
+        slug = t.get("slug", "")
+        if slug:
+            lines.append(f'  <url><loc>{base}/tour/{slug}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>')
+    lines.append('</urlset>')
+    return Response(content="\n".join(lines), media_type="application/xml")
+
+
 @app.get("/pinterest-76b6f.html", response_class=HTMLResponse)
 async def pinterest_verify():
     path = os.path.join(os.path.dirname(BASE_DIR), "pinterest-76b6f.html")
