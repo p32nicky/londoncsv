@@ -43,7 +43,7 @@ def post_tour(tour: dict) -> dict:
 
     # Medium import URL
     slug = tour.get("slug", "")
-    medium_url = f"https://londoncsv.vercel.app/tour/{slug}/medium" if slug else link
+    medium_url = f"https://londonadventurehub.com/tour/{slug}/medium" if slug else link
 
     caption = f"<b>{title}</b>"
     caption += f"<br/><br/>{description}"

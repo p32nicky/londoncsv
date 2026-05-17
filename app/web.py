@@ -258,7 +258,7 @@ async def rss_feed():
 
 @app.get("/sitemap.xml")
 async def sitemap():
-    base = "https://londoncsv.vercel.app"
+    base = "https://londonadventurehub.com"
     all_tours = get_latest_tours(settings.db_path, limit=99999, offset=0)
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -278,7 +278,7 @@ async def pinterest_verify():
         return HTMLResponse(content=f.read())
 
 
-TUMBLR_CALLBACK = "https://londoncsv.vercel.app/tumblr/callback"
+TUMBLR_CALLBACK = "https://londonadventurehub.com/tumblr/callback"
 
 
 def _tumblr_keys():

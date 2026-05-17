@@ -29,7 +29,7 @@ def _clean_html(html: str, image_url: str = "") -> str:
 
 
 def _medium_button(slug: str = "") -> str:
-    url = f"https://londoncsv.vercel.app/tour/{slug}/medium" if slug else "https://londoncsv.vercel.app"
+    url = f"https://londonadventurehub.com/tour/{slug}/medium" if slug else "https://londonadventurehub.com"
     return f'\n<p><strong><a href="{url}">Import this article to Medium →</a></strong></p>'
 
 
