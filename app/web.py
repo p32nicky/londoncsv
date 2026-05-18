@@ -256,6 +256,12 @@ async def rss_feed():
     return Response(content=xml_str, media_type="application/rss+xml")
 
 
+@app.get("/robots.txt")
+async def robots():
+    content = "User-agent: *\nAllow: /\nSitemap: https://londonadventurehub.com/sitemap.xml\n"
+    return Response(content=content, media_type="text/plain")
+
+
 @app.get("/sitemap.xml")
 async def sitemap():
     base = "https://londonadventurehub.com"
