@@ -78,6 +78,13 @@ def _clean_article(html: str) -> str:
     # Strip trailing <hr/> and any "Book This Tour Today" section
     result = re.sub(r'<hr\s*/?>\s*<h2[^>]*>Book This Tour.*', '', result, flags=re.IGNORECASE | re.DOTALL)
     result = re.sub(r'<hr\s*/?>\s*$', '', result.strip())
+    # Convert markdown bold **text** to <strong>text</strong>
+    result = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', result)
+    # Convert markdown bullet lines "* text" or "- text" to <li>text</li>
+    result = re.sub(r'(?m)^\*\s+(.+)$', r'<li>\1</li>', result)
+    result = re.sub(r'(?m)^-\s+(.+)$', r'<li>\1</li>', result)
+    # Wrap consecutive <li> in <ul>
+    result = re.sub(r'(<li>.*?</li>\n?)+', lambda m: '<ul>' + m.group(0) + '</ul>', result, flags=re.DOTALL)
     return result
 
 
