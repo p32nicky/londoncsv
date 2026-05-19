@@ -28,20 +28,6 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 
 def shorten(url: str) -> str:
-    token = os.environ.get("BITLY_TOKEN", "").strip()
-    if not token:
-        return url
-    try:
-        r = httpx.post(
-            "https://api-ssl.bitly.com/v4/shorten",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            json={"long_url": url},
-            timeout=10,
-        )
-        if r.status_code in (200, 201):
-            return r.json().get("link", url)
-    except Exception:
-        pass
     return url
 
 
@@ -534,21 +520,6 @@ async def auto_publish_status():
     })
 
 
-@app.get("/api/test-bitly")
-async def test_bitly():
-    token = os.environ.get("BITLY_TOKEN", "").strip()
-    if not token:
-        return JSONResponse({"error": "no token"})
-    try:
-        r = httpx.post(
-            "https://api-ssl.bitly.com/v4/shorten",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            json={"long_url": "https://www.viator.com/tours/London/test"},
-            timeout=10,
-        )
-        return JSONResponse({"status": r.status_code, "body": r.json()})
-    except Exception as e:
-        return JSONResponse({"error": str(e)})
 
 
 @app.get("/api/status")
