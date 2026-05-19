@@ -1,7 +1,7 @@
-fastapi
-uvicorn[standard]
-psycopg2-binary
-httpx
-jinja2
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+psycopg2-binary==2.9.10
+httpx==0.28.1
+jinja2==3.1.6
 anthropic
-python-multipart
+python-multipart==0.0.20
