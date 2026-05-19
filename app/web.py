@@ -70,8 +70,15 @@ def _clean_article(html: str) -> str:
         if not stripped_first_heading and re.match(r'^<h[12][^>]*>', line, re.IGNORECASE):
             stripped_first_heading = True
             continue
+        # Strip lines containing book-now CTAs
+        if re.search(r'👉|Book now|Book this tour|Book This Tour', line, re.IGNORECASE):
+            continue
         out.append(line)
-    return "\n".join(out)
+    result = "\n".join(out)
+    # Strip trailing <hr/> and any "Book This Tour Today" section
+    result = re.sub(r'<hr\s*/?>\s*<h2[^>]*>Book This Tour.*', '', result, flags=re.IGNORECASE | re.DOTALL)
+    result = re.sub(r'<hr\s*/?>\s*$', '', result.strip())
+    return result
 
 
 @app.get("/tour/{slug}", response_class=HTMLResponse)
