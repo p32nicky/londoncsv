@@ -46,7 +46,15 @@ def mark_posted(slug):
 def main():
     tours = get_next_unposted(BATCH)
     if not tours:
-        print("All tours already posted to Tumblr!"); return
+        print("All tours posted — resetting for next cycle...")
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("UPDATE tours SET tumblr_posted_at=NULL")
+        conn.commit()
+        conn.close()
+        tours = get_next_unposted(BATCH)
+    if not tours:
+        print("No tours found!"); return
 
     print(f"Posting {len(tours)} tours to Tumblr...")
     posted = 0
