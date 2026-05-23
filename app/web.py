@@ -70,8 +70,8 @@ def _clean_article(html: str) -> str:
         if not stripped_first_heading and re.match(r'^<h[12][^>]*>', line, re.IGNORECASE):
             stripped_first_heading = True
             continue
-        # Strip lines containing book-now CTAs
-        if re.search(r'👉|Book now|Book this tour|Book This Tour', line, re.IGNORECASE):
+        # Strip plain book-now CTAs but keep styled Viator buttons
+        if re.search(r'👉|Book now', line, re.IGNORECASE) and 'background:#8B1A1A' not in line:
             continue
         out.append(line)
     result = "\n".join(out)
