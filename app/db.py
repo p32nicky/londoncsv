@@ -201,13 +201,13 @@ def list_tours(db_path: str, query: str = "", page: int = 1, per_page: int = 24)
         if query:
             like = f"%{query}%"
             rows = _rows(conn,
-                f"SELECT * FROM tours WHERE title {like_op} {ph} ORDER BY publish_date DESC LIMIT {ph} OFFSET {ph}",
+                f"SELECT * FROM tours WHERE title {like_op} {ph} ORDER BY id DESC LIMIT {ph} OFFSET {ph}",
                 (like, per_page, offset))
             total = (_one(conn, f"SELECT COUNT(*) as count FROM tours WHERE title {like_op} {ph}", (like,)) or {}).get("count", 0) \
                 if USE_POSTGRES else (_one(conn, f"SELECT COUNT(*) FROM tours WHERE title {like_op} {ph}", (like,)) or [0])[0]
         else:
             rows = _rows(conn,
-                f"SELECT * FROM tours ORDER BY publish_date DESC LIMIT {ph} OFFSET {ph}",
+                f"SELECT * FROM tours ORDER BY id DESC LIMIT {ph} OFFSET {ph}",
                 (per_page, offset))
             total = (_one(conn, "SELECT COUNT(*) as count FROM tours") or {}).get("count", 0) \
                 if USE_POSTGRES else (_one(conn, "SELECT COUNT(*) FROM tours") or [0])[0]
