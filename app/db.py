@@ -3,7 +3,9 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Optional
 
-_DATABASE_URL = os.environ.get("DATABASE_URL", "").replace("&channel_binding=require", "").replace("?channel_binding=require&", "?")
+_DATABASE_URL = os.environ.get("DATABASE_URL", "").replace("&channel_binding=require", "").replace("?channel_binding=require&", "?").replace("?pgbouncer=true&", "?").replace("&pgbouncer=true", "")
+if _DATABASE_URL and "sslmode" not in _DATABASE_URL:
+    _DATABASE_URL += ("&" if "?" in _DATABASE_URL else "?") + "sslmode=require"
 USE_POSTGRES = bool(_DATABASE_URL)
 
 if USE_POSTGRES:
@@ -13,7 +15,15 @@ if USE_POSTGRES:
 
 @contextmanager
 def _pg_conn():
-    conn = psycopg2.connect(_DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    import logging
+    logger = logging.getLogger(__name__)
+    host = _DATABASE_URL.split("@")[-1].split("/")[0] if "@" in _DATABASE_URL else "unknown"
+    logger.info(f"DB connecting to: {host}")
+    try:
+        conn = psycopg2.connect(_DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10)
+    except Exception as e:
+        logger.error(f"DB connection FAILED to {host}: {e}")
+        raise
     try:
         yield conn
         conn.commit()
