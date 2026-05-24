@@ -3,9 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Optional
 
-_DATABASE_URL = os.environ.get("DATABASE_URL", "").replace("&channel_binding=require", "").replace("?channel_binding=require&", "?").replace("?pgbouncer=true&", "?").replace("&pgbouncer=true", "")
-if _DATABASE_URL and "sslmode" not in _DATABASE_URL:
-    _DATABASE_URL += ("&" if "?" in _DATABASE_URL else "?") + "sslmode=require"
+_DATABASE_URL = os.environ.get("DATABASE_URL", "")
 USE_POSTGRES = bool(_DATABASE_URL)
 
 if USE_POSTGRES:
@@ -13,16 +11,63 @@ if USE_POSTGRES:
     import psycopg2.extras
 
 
+def _parse_pg_url(url):
+    """Parse postgresql URL safely — handles passwords with special chars like ? and !"""
+    import logging
+    logger = logging.getLogger(__name__)
+    url = url.strip()
+    for scheme in ("postgresql://", "postgres://"):
+        if url.startswith(scheme):
+            url = url[len(scheme):]
+            break
+    # Split userinfo from hostinfo at LAST @ (password might contain @)
+    at_idx = url.rfind("@")
+    if at_idx == -1:
+        logger.error("No @ found in DATABASE_URL")
+        return {}
+    userinfo = url[:at_idx]
+    hostinfo = url[at_idx + 1:]
+    # user:password — first colon separates them
+    colon_idx = userinfo.find(":")
+    if colon_idx == -1:
+        user, password = userinfo, ""
+    else:
+        user = userinfo[:colon_idx]
+        password = userinfo[colon_idx + 1:]
+    # Strip pgbouncer/channel_binding from hostinfo query params
+    if "?" in hostinfo:
+        hostpart, params = hostinfo.split("?", 1)
+        params = "&".join(
+            p for p in params.split("&")
+            if not p.startswith("pgbouncer") and not p.startswith("channel_binding")
+        )
+    else:
+        hostpart, params = hostinfo, ""
+    # host:port/dbname
+    if "/" in hostpart:
+        hostport, dbname = hostpart.rsplit("/", 1)
+    else:
+        hostport, dbname = hostpart, "postgres"
+    if ":" in hostport:
+        host, port_str = hostport.rsplit(":", 1)
+        port = int(port_str)
+    else:
+        host, port = hostport, 5432
+    kwargs = dict(host=host, port=port, dbname=dbname, user=user, password=password,
+                  sslmode="require", connect_timeout=10)
+    logger.info(f"DB connecting to: {host}:{port}/{dbname} as {user}")
+    return kwargs
+
+
 @contextmanager
 def _pg_conn():
     import logging
     logger = logging.getLogger(__name__)
-    host = _DATABASE_URL.split("@")[-1].split("/")[0] if "@" in _DATABASE_URL else "unknown"
-    logger.info(f"DB connecting to: {host}")
+    kwargs = _parse_pg_url(_DATABASE_URL)
     try:
-        conn = psycopg2.connect(_DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10)
+        conn = psycopg2.connect(cursor_factory=psycopg2.extras.RealDictCursor, **kwargs)
     except Exception as e:
-        logger.error(f"DB connection FAILED to {host}: {e}")
+        logger.error(f"DB connection FAILED: {e}")
         raise
     try:
         yield conn
