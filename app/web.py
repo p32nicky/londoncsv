@@ -37,18 +37,6 @@ def shorten(url: str) -> str:
     return url
 
 
-@app.get("/debug", response_class=JSONResponse)
-async def debug():
-    from app.db import _DATABASE_URL, USE_POSTGRES, _parse_pg_url
-    parsed = _parse_pg_url(_DATABASE_URL) if _DATABASE_URL else {}
-    safe = {k: ("***" if k == "password" else v) for k, v in parsed.items()}
-    return {
-        "db_init_error": _db_init_error,
-        "use_postgres": USE_POSTGRES,
-        "parsed_conn": safe,
-        "raw_url_prefix": _DATABASE_URL[:30] if _DATABASE_URL else "EMPTY",
-    }
-
 
 @app.get("/", response_class=HTMLResponse)
 async def index(
