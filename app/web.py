@@ -57,10 +57,7 @@ async def index(
     page: int = Query(1, ge=1),
 ):
     per_page = 24
-    try:
-        rows, total = list_tours(settings.db_path, query=q, page=page, per_page=per_page)
-    except Exception as e:
-        return HTMLResponse(f"<pre>DB ERROR: {type(e).__name__}: {e}</pre>", status_code=500)
+    rows, total = list_tours(settings.db_path, query=q, page=page, per_page=per_page)
     total_pages = max(1, (total + per_page - 1) // per_page)
     return templates.TemplateResponse("index.html", {
         "request": request,
