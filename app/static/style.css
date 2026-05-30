@@ -55,6 +55,7 @@ main{flex:1;max-width:1200px;margin:0 auto;padding:24px 20px;width:100%}
 .btn-article{display:inline-block;background:#2c7a4b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;align-self:flex-start;transition:background .15s}
 .btn-article:hover{background:#1e5c38}
 .back-link{display:inline-block;margin-top:32px;color:#8B1A1A;text-decoration:none;font-weight:600}
+.static-page{max-width:800px;margin:0 auto;padding:2rem 1rem}.static-page h1{font-size:2rem;margin-bottom:.5rem;color:#222}.static-page h2{font-size:1.3rem;margin:2rem 0 .5rem;color:#333}.static-page p,.static-page li{line-height:1.8;color:#444;margin-bottom:.75rem}.static-page ul{margin-left:1.5rem}.static-page a{color:#8B1A1A}.last-updated{color:#888;font-size:.85rem;margin-bottom:2rem}
 .tour-layout{display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start}
 @media(max-width:900px){.tour-layout{grid-template-columns:1fr}}
 .expedia-widget-side{margin-bottom:20px;border-radius:12px;overflow:hidden}

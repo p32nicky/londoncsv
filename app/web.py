@@ -249,6 +249,19 @@ async def pinterest_verify():
 TUMBLR_CALLBACK = "https://londonadventurehub.com/tumblr/callback"
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    return templates.TemplateResponse("privacy.html", {"request": request, "site_title": settings.site_title})
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact(request: Request):
+    return templates.TemplateResponse("contact.html", {"request": request, "site_title": settings.site_title})
+
+@app.get("/affiliate-disclosure", response_class=HTMLResponse)
+async def affiliate_disclosure(request: Request):
+    return templates.TemplateResponse("affiliate_disclosure.html", {"request": request, "site_title": settings.site_title})
+
+
 def _tumblr_keys():
     ck = os.environ.get("TUMBLR_CONSUMER_KEY", "").strip()
     cs = os.environ.get("TUMBLR_CONSUMER_SECRET", "").strip()
