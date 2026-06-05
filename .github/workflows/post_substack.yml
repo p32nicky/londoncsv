@@ -1,0 +1,31 @@
+name: Post to Substack (hourly)
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour
+  workflow_dispatch:        # manual trigger
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install psycopg2-binary httpx requests curl-cffi
+
+      - name: Post to Substack
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GROQ_KEY:     ${{ secrets.GROQ_KEY }}
+          HEADOUT_AKEY: ${{ secrets.HEADOUT_AKEY }}
+          SUBSTACK_SID: ${{ secrets.SUBSTACK_SID }}
+          CF_CLEARANCE: ${{ secrets.CF_CLEARANCE }}
+          SUBSTACK_LLI: ${{ secrets.SUBSTACK_LLI }}
+        run: python post_combined_substack.py
