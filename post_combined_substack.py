@@ -264,7 +264,14 @@ def post_headout(session, user_id):
             title = re.search(r'<meta property="og:title" content="([^"]+)"', r.text)
             desc  = re.search(r'<meta property="og:description" content="([^"]+)"', r.text)
             img   = re.search(r'(https://cdn-imgix\.headout\.com/[^\s"\']+\.(?:jpg|jpeg|png|webp))', r.text)
+            price = re.search(r'"price":\s*"?(\d+\.?\d*)"?', r.text)
             if not title:
+                mark_headout_posted(url)
+                continue
+            # Skip free/zero-price listings
+            price_val = float(price.group(1)) if price else 0
+            if price_val == 0:
+                print(f"  SKIP (price=0): {url.split('headout.com')[1][:60]}")
                 mark_headout_posted(url)
                 continue
             link = url.rstrip("/") + f"/?refId={HEADOUT_AKEY}"
