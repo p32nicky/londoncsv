@@ -146,18 +146,25 @@ def build_doc(title, description, link, source):
 
 def get_session():
     s = requests.Session(impersonate="chrome120")
+    # Do NOT send cf_clearance - it's IP-bound to the user's browser.
+    # curl_cffi browser impersonation handles Cloudflare via TLS fingerprint.
     s.cookies.update({"substack.sid": unquote(SESSION_COOKIE),
-                      "cf_clearance": CF_CLEARANCE,
                       "substack.lli": SUBSTACK_LLI})
+    if CF_CLEARANCE:
+        s.cookies.set("cf_clearance", CF_CLEARANCE)
     s.headers.update({"Referer": f"https://{PUBLICATION}/publish/post",
                       "Origin":  f"https://{PUBLICATION}"})
+    # First hit homepage to let Cloudflare set cookies, then get CSRF
+    s.get(f"https://{PUBLICATION}", timeout=15)
     r = s.get(f"https://{PUBLICATION}/publish/post", timeout=15)
+    print(f"Publish page status: {r.status_code}")
     csrf = re.search(r'"csrf_token"\s*:\s*"([^"]+)"', r.text)
     if csrf:
         s.headers["X-CSRF-Token"] = csrf.group(1)
         print("CSRF: found")
     else:
         print(f"CSRF: not found ({r.status_code})")
+        print(f"Snippet: {r.text[:300]}")
     return s
 
 
