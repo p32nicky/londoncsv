@@ -1,0 +1,24 @@
+name: Fetch Viator tours + generate articles (weekly)
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'   # 2am UTC every Sunday
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install psycopg2-binary httpx
+      - name: Fetch and generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VIATOR_KEY:   ${{ secrets.VIATOR_KEY }}
+          GROQ_KEY:     ${{ secrets.GROQ_KEY }}
+        run: python fetch_and_generate.py
