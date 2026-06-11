@@ -239,6 +239,14 @@ async def sitemap():
     return Response(content="\n".join(lines), media_type="application/xml")
 
 
+@app.get("/page-sitemap.xml")
+@app.get("/sitemap-misc.xml")
+@app.get("/post-sitemap.xml")
+@app.get("/sitemap_index.xml")
+async def old_wordpress_sitemaps():
+    return RedirectResponse(url="/sitemap.xml", status_code=301)
+
+
 @app.get("/pinterest-76b6f.html", response_class=HTMLResponse)
 async def pinterest_verify():
     path = os.path.join(os.path.dirname(BASE_DIR), "pinterest-76b6f.html")
