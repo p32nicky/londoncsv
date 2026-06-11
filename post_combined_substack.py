@@ -306,18 +306,11 @@ def post_headout(session, user_id):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    last = get_setting("substack_last_source", "headout")
-    source = "viator" if last == "headout" else "headout"
-    print(f"Last: {last} -> Now: {source}")
-
     session = get_session()
     user_id = get_user_id(session)
     print(f"User: {user_id}")
 
-    ok = post_viator(session, user_id) if source == "viator" else post_headout(session, user_id)
-
-    if ok:
-        set_setting("substack_last_source", source)
+    post_viator(session, user_id)
 
 
 if __name__ == "__main__":
