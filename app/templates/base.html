@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="p:domain_verify" content="76b6fd98ba633723db57feeb156dc7ed"/>
   <title>{% block title %}{{ site_title }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Discover the best London tours, attractions and experiences. Compare prices on walking tours, day trips, theatre tickets and more.{% endblock %}"/>
+  {% block canonical %}{% endblock %}
+  {% block og %}
+  <meta property="og:title" content="{{ site_title }}"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="{{ site_title }}"/>
+  {% endblock %}
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
   <link rel="stylesheet" href="/static/style.css"/>
   <!-- Google tag (gtag.js) -->

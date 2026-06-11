@@ -1,5 +1,26 @@
 {% extends "base.html" %}
 {% block title %}{{ t.title }} — {{ site_title }}{% endblock %}
+{% block meta_description %}{{ (t.description or t.title) | striptags | truncate(155) }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://londonadventurehub.com/tour/{{ t.slug }}"/>{% endblock %}
+{% block og %}
+  <meta property="og:title" content="{{ t.title }}"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:url" content="https://londonadventurehub.com/tour/{{ t.slug }}"/>
+  <meta property="og:site_name" content="{{ site_title }}"/>
+  {% if t.image_url %}<meta property="og:image" content="{{ t.image_url }}"/>{% endif %}
+  <meta property="og:description" content="{{ (t.description or t.title) | striptags | truncate(155) }}"/>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": {{ t.title | tojson }},
+    "description": {{ ((t.description or t.title) | striptags | truncate(155)) | tojson }},
+    {% if t.image_url %}"image": {{ t.image_url | tojson }},{% endif %}
+    "mainEntityOfPage": "https://londonadventurehub.com/tour/{{ t.slug }}",
+    "publisher": {"@type": "Organization", "name": {{ site_title | tojson }}}
+  }
+  </script>
+{% endblock %}
 {% block content %}
 <div class="expedia-banner">
   <div class="eg-affiliate-banners" data-program="us-expedia" data-network="pz" data-layout="leaderboard" data-image="castle" data-message="search-hotels-flights-cars-activities-more" data-camref="1101l3NUFq" data-pubref="" data-link="activities"></div>
