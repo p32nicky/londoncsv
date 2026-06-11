@@ -24,7 +24,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GROQ_KEY:     ${{ secrets.GROQ_KEY }}
-          HEADOUT_AKEY: ${{ secrets.HEADOUT_AKEY }}
           SUBSTACK_SID: ${{ secrets.SUBSTACK_SID }}
           CF_CLEARANCE: ${{ secrets.CF_CLEARANCE }}
           SUBSTACK_LLI: ${{ secrets.SUBSTACK_LLI }}

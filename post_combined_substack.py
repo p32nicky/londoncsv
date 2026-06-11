@@ -13,7 +13,6 @@ from curl_cffi import requests
 PUBLICATION   = "nickmdavies.substack.com"
 API_BASE      = f"https://{PUBLICATION}/api/v1"
 GROQ_KEY      = os.environ["GROQ_KEY"]
-HEADOUT_AKEY  = os.environ["HEADOUT_AKEY"]
 DATABASE_URL  = os.environ["DATABASE_URL"]
 SESSION_COOKIE= os.environ["SUBSTACK_SID"]
 CF_CLEARANCE  = os.environ.get("CF_CLEARANCE", "")
@@ -281,7 +280,6 @@ def post_headout(session, user_id):
                 print(f"  SKIP (price=0): {url.split('headout.com')[1][:60]}")
                 mark_headout_posted(url)
                 continue
-            link = url.rstrip("/") + f"/?refId={HEADOUT_AKEY}"
             t = unescape(title.group(1)).strip()
             d = unescape(desc.group(1)).strip()[:400] if desc else ""
             i = img.group(1) if img else ""
