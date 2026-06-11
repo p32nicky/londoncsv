@@ -2,7 +2,11 @@
 body{font-family:system-ui,-apple-system,sans-serif;background:#f7f5f0;color:#222;min-height:100vh;display:flex;flex-direction:column}
 header{background:#8B1A1A;padding:14px 24px;position:sticky;top:0;z-index:100}
 .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.logo{color:#fff;text-decoration:none;font-size:1.2rem;font-weight:700;white-space:nowrap}
+.logo{color:#fff;text-decoration:none;font-size:1.9rem;font-weight:800;white-space:nowrap;letter-spacing:-.5px}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter-chips a{background:#fff;border:1px solid #ddd2c2;color:#555;padding:6px 14px;border-radius:20px;font-size:.85rem;text-decoration:none;font-weight:600;transition:all .15s}
+.filter-chips a:hover{border-color:#8B1A1A;color:#8B1A1A}
+.filter-chips a.active{background:#8B1A1A;border-color:#8B1A1A;color:#fff}
 nav{display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end;flex-wrap:wrap}
 .search-form{display:flex;gap:6px}
 .search-form input{padding:7px 12px;border:none;border-radius:6px;font-size:.9rem;width:220px}

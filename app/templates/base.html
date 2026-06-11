@@ -28,6 +28,10 @@
     <div class="header-inner">
       <a class="logo" href="/">🇬🇧 {{ site_title }}</a>
       <nav>
+        <form class="search-form" action="/" method="get">
+          <input type="search" name="q" placeholder="Search tours..." value="{{ query or '' }}"/>
+          <button type="submit">Search</button>
+        </form>
       </nav>
     </div>
   </header>

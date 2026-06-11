@@ -2,7 +2,20 @@
 {% block canonical %}<link rel="canonical" href="https://londonadventurehub.com/{% if page > 1 %}?page={{ page }}{% endif %}"/>{% endblock %}
 {% block content %}
 <div class="toolbar">
-  <p class="count">{{ total }} London tours & experiences</p>
+  <p class="count">{{ total }} London tours & experiences{% if query %} — results for “{{ query }}”{% endif %}</p>
+</div>
+
+<div class="filter-chips">
+  <a href="/" class="{% if not query %}active{% endif %}">All</a>
+  <a href="/?q=walking" class="{% if query == 'walking' %}active{% endif %}">Walking Tours</a>
+  <a href="/?q=day trip" class="{% if query == 'day trip' %}active{% endif %}">Day Trips</a>
+  <a href="/?q=food" class="{% if query == 'food' %}active{% endif %}">Food & Drink</a>
+  <a href="/?q=harry potter" class="{% if query == 'harry potter' %}active{% endif %}">Harry Potter</a>
+  <a href="/?q=palace" class="{% if query == 'palace' %}active{% endif %}">Palaces & Castles</a>
+  <a href="/?q=museum" class="{% if query == 'museum' %}active{% endif %}">Museums</a>
+  <a href="/?q=cruise" class="{% if query == 'cruise' %}active{% endif %}">River Cruises</a>
+  <a href="/?q=stonehenge" class="{% if query == 'stonehenge' %}active{% endif %}">Stonehenge</a>
+  <a href="/?q=private" class="{% if query == 'private' %}active{% endif %}">Private Tours</a>
 </div>
 
 {% if tours %}
