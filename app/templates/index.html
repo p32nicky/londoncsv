@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block canonical %}<link rel="canonical" href="https://londonadventurehub.com/{% if page > 1 %}?page={{ page }}{% endif %}"/>{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://www.londonadventurehub.com/{% if page > 1 %}?page={{ page }}{% endif %}"/>{% endblock %}
 {% block content %}
 <div class="toolbar">
   <p class="count">{{ total }} London tours & experiences{% if query %} — results for “{{ query }}”{% endif %}</p>

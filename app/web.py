@@ -220,13 +220,13 @@ Requirements:
 
 @app.get("/robots.txt")
 async def robots():
-    content = "User-agent: *\nAllow: /\nSitemap: https://londonadventurehub.com/sitemap.xml\n"
+    content = "User-agent: *\nAllow: /\nSitemap: https://www.londonadventurehub.com/sitemap.xml\n"
     return Response(content=content, media_type="text/plain")
 
 
 @app.get("/sitemap.xml")
 async def sitemap():
-    base = "https://londonadventurehub.com"
+    base = "https://www.londonadventurehub.com"
     all_tours = get_latest_tours(settings.db_path, limit=99999, offset=0)
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -254,7 +254,7 @@ async def pinterest_verify():
         return HTMLResponse(content=f.read())
 
 
-TUMBLR_CALLBACK = "https://londonadventurehub.com/tumblr/callback"
+TUMBLR_CALLBACK = "https://www.londonadventurehub.com/tumblr/callback"
 
 
 @app.get("/privacy", response_class=HTMLResponse)
