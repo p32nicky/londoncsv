@@ -9,3 +9,4 @@ data/
 .env*.local
 post_paris_substack.py
 post_rome_substack.py
+fetch_viator.py

@@ -109,6 +109,8 @@ def main():
             link  = p.get("productUrl", "")
             if not title or not link:
                 continue
+            if "d737-" not in link:
+                continue  # not a London-destination product
             if "?" in link:
                 link += "&target_lander=NONE"
             else:
