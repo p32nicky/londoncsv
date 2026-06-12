@@ -13,6 +13,7 @@ ACCOUNTS = [
     {
         "name": "London",
         "cookie": os.environ["SUBSTACK_SID"],
+        "pub": "nickmdavies.substack.com",
         "city": "London",
         "topics": [
             "a hidden or underrated London experience most tourists miss",
@@ -28,6 +29,7 @@ ACCOUNTS = [
     {
         "name": "Paris",
         "cookie": os.environ["PARIS_SID"],
+        "pub": "paristours.substack.com",
         "city": "Paris",
         "topics": [
             "a hidden Paris gem most tourists walk straight past",
@@ -43,6 +45,7 @@ ACCOUNTS = [
     {
         "name": "Rome",
         "cookie": os.environ["ROME_SID"],
+        "pub": "explorerometours.substack.com",
         "city": "Rome",
         "topics": [
             "the Colosseum underground and gladiator's gate",
@@ -86,11 +89,14 @@ Rules:
     return None
 
 
-def post_note(cookie, text):
+def post_note(cookie, pub, text):
+    # substack.com is Cloudflare-challenged from CI - go via publication domain,
+    # which the hourly publish poster already reaches fine.
     s = requests.Session(impersonate="chrome120")
     s.cookies.update({"substack.sid": unquote(cookie)})
-    s.headers.update({"Referer": "https://substack.com/notes",
-                      "Origin": "https://substack.com"})
+    s.headers.update({"Referer": f"https://{pub}/",
+                      "Origin": f"https://{pub}"})
+    s.get(f"https://{pub}", timeout=15)  # warm Cloudflare cookies
     paragraphs = [{"type": "paragraph", "content": [{"type": "text", "text": p}]}
                   for p in text.split("\n\n") if p.strip()]
     body = {
@@ -100,8 +106,12 @@ def post_note(cookie, text):
         "surface": "feed",
         "replyMinimumRole": "everyone",
     }
-    r = s.post("https://substack.com/api/v1/comment/feed", json=body, timeout=20)
-    return r.status_code in (200, 201), f"{r.status_code}: {r.text[:150]}"
+    for endpoint in (f"https://{pub}/api/v1/comment/feed",
+                     "https://substack.com/api/v1/comment/feed"):
+        r = s.post(endpoint, json=body, timeout=20)
+        if r.status_code in (200, 201):
+            return True, str(r.status_code)
+    return False, f"{r.status_code}: {r.text[:150]}"
 
 
 for acc in ACCOUNTS:
@@ -110,7 +120,7 @@ for acc in ACCOUNTS:
     if not note:
         print(f"[{acc['name']}] generation failed")
         continue
-    ok, detail = post_note(acc["cookie"], note)
+    ok, detail = post_note(acc["cookie"], acc["pub"], note)
     print(f"[{acc['name']}] topic: {topic}")
     print(f"[{acc['name']}] {'OK' if ok else 'FAIL ' + detail}")
     print(f"  > {note[:100]}...")
