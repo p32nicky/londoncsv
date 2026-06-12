@@ -11,3 +11,4 @@ post_paris_substack.py
 post_rome_substack.py
 fetch_viator.py
 post_notes.py
+run_substack_local.py

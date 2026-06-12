@@ -1,9 +1,9 @@
 name: Post to Substack (hourly)
 
+# Cloudflare blocks Substack from GitHub IPs - runs locally via
+# the SubstackLondonTours hourly scheduled task (run_substack_local.py).
 on:
-  schedule:
-    - cron: '0 * * * *'   # every hour
-  workflow_dispatch:        # manual trigger
+  workflow_dispatch:        # manual trigger only
 
 jobs:
   post:
