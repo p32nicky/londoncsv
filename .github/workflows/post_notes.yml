@@ -1,0 +1,26 @@
+name: Post Substack Notes (3x daily)
+
+on:
+  schedule:
+    - cron: '30 8 * * *'    # 8:30 UTC morning
+    - cron: '30 13 * * *'   # 13:30 UTC midday US-morning
+    - cron: '30 18 * * *'   # 18:30 UTC evening
+  workflow_dispatch:
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install httpx curl-cffi
+      - name: Post notes
+        env:
+          GROQ_KEY:     ${{ secrets.GROQ_KEY }}
+          SUBSTACK_SID: ${{ secrets.SUBSTACK_SID }}
+          PARIS_SID:    ${{ secrets.PARIS_SID }}
+          ROME_SID:     ${{ secrets.ROME_SID }}
+        run: python post_notes.py
