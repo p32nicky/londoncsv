@@ -1,9 +1,8 @@
 """
-Alternating Substack poster — Viator (DB) and Headout (sitemap), 1 post per run.
-State stored in Supabase — runs in GitHub Actions hourly.
+Substack poster — Viator tours from the DB, 1 post per run.
+State stored in Supabase — runs locally via Windows task (CF blocks GitHub IPs).
 """
 import os, re, time, json, psycopg2, httpx
-import requests as std_requests
 from html import unescape
 from urllib.parse import unquote
 from datetime import datetime, timezone
@@ -17,11 +16,6 @@ DATABASE_URL  = os.environ["DATABASE_URL"]
 SESSION_COOKIE= os.environ["SUBSTACK_SID"]
 CF_CLEARANCE  = os.environ.get("CF_CLEARANCE", "")
 SUBSTACK_LLI  = os.environ.get("SUBSTACK_LLI", "")
-
-SCRAPE_HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-SKIP_CATS  = {"jet-skiing","nightlife","train-tickets","airport-transfers",
-              "cruise-port-transfers","helicopter","hard-rock-cafe","escape-rooms",
-              "transfer","transfers"}
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────
@@ -64,31 +58,6 @@ def set_setting(key, value):
     conn.close()
 
 
-def is_headout_posted(url):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT 1 FROM headout_posted WHERE url=%s", (url,))
-    result = cur.fetchone() is not None
-    conn.close()
-    return result
-
-
-def mark_headout_posted(url):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO headout_posted (url, posted_at) VALUES (%s,%s) ON CONFLICT DO NOTHING",
-                (url, datetime.now(timezone.utc).isoformat()))
-    conn.commit()
-    conn.close()
-
-
-def reset_headout_posted():
-    conn = get_db()
-    conn.cursor().execute("DELETE FROM headout_posted")
-    conn.commit()
-    conn.close()
-
-
 # ── Groq article ──────────────────────────────────────────────────────────────
 
 def groq_article(title, description):
@@ -118,11 +87,22 @@ Tone: enthusiastic honest travel writer. No booking CTAs. Plain text only."""
     return description
 
 
-def build_doc(title, description, link, source):
-    brand = "Headout" if source == "headout" else "Viator"
+def build_doc(title, description, link, source, cover_cdn=None):
+    brand = "Viator"
     article = groq_article(title, description)
 
     nodes = []
+
+    # Embed the (Substack-hosted) image at the top of the body so it always
+    # shows, even if the cover_image thumbnail fails to render.
+    if cover_cdn:
+        nodes.append({"type": "captionedImage", "content": [{
+            "type": "image2",
+            "attrs": {"src": cover_cdn, "fullscreen": False,
+                      "imageSize": "normal", "type": "image/jpeg",
+                      "alignment": "center", "belowTheFold": False}
+        }]})
+
     for para in article.split("\n\n"):
         para = para.strip()
         if para:
@@ -139,6 +119,22 @@ def build_doc(title, description, link, source):
         "text": "Affiliate link - we may earn a small commission at no extra cost to you."
     }]})
     return json.dumps({"type": "doc", "content": nodes})
+
+
+def upload_image(session, image_url):
+    """Substack won't host an arbitrary external URL for cover_image — it must
+    be uploaded to Substack's CDN first. POST the external URL to /api/v1/image
+    and return the Substack-hosted URL (or None on failure)."""
+    if not image_url:
+        return None
+    try:
+        r = session.post(f"{API_BASE}/image", json={"image": image_url}, timeout=20)
+        if r.status_code in (200, 201):
+            return r.json().get("url")
+        print(f"  image upload failed: {r.status_code} {r.text[:120]}")
+    except Exception as e:
+        print(f"  image upload error: {e}")
+    return None
 
 
 # ── Substack ──────────────────────────────────────────────────────────────────
@@ -178,7 +174,10 @@ def get_user_id(session):
 
 
 def publish(session, user_id, title, description, link, image_url, source):
-    doc = build_doc(title, description, link, source)
+    # Upload the image to Substack's CDN first; raw external URLs don't stick
+    # as cover_image. Reuse the same hosted URL in the body.
+    cover_cdn = upload_image(session, image_url)
+    doc = build_doc(title, description, link, source, cover_cdn=cover_cdn)
     payload = {
         "draft_title":    title,
         "draft_subtitle": description[:200],
@@ -186,7 +185,7 @@ def publish(session, user_id, title, description, link, image_url, source):
         "audience":       "everyone",
         "section_chosen": False,
         "draft_bylines":  [{"id": user_id, "is_guest": False}] if user_id else [],
-        "cover_image":    image_url or None,
+        "cover_image":    cover_cdn or image_url or None,
     }
     resp = session.post(f"{API_BASE}/drafts", json=payload, timeout=20)
     if resp.status_code not in (200, 201):
@@ -244,70 +243,6 @@ def post_viator(session, user_id):
         print(f"OK: {result['url']}")
         return True
     print(f"FAIL: {result['error']}")
-    return False
-
-
-# ── Headout ───────────────────────────────────────────────────────────────────
-
-def get_headout_urls():
-    r = std_requests.get("https://www.headout.com/products-sitemap.xml",
-                         headers=SCRAPE_HDR, timeout=20)
-    all_urls = re.findall(r'<loc>(https://www\.headout\.com/[^<]+)</loc>', r.text)
-    out = []
-    for url in all_urls:
-        if "-e-" not in url:
-            continue
-        cat = url.replace("https://www.headout.com/","").split("/")[0]
-        if any(s in cat for s in SKIP_CATS):
-            continue
-        if ("london" in url.lower() or
-            any(k in cat for k in ["stonehenge","cotswold","windsor","oxford",
-                                   "bath","cambridge","canterbury","dover"])):
-            out.append(url)
-    return out
-
-
-def post_headout(session, user_id):
-    all_urls = get_headout_urls()
-    remaining = [u for u in all_urls if not is_headout_posted(u)]
-    if not remaining:
-        reset_headout_posted()
-        remaining = all_urls
-
-    for url in remaining:
-        try:
-            r = std_requests.get(url, headers=SCRAPE_HDR, timeout=15)
-            title = re.search(r'<meta property="og:title" content="([^"]+)"', r.text)
-            desc  = re.search(r'<meta property="og:description" content="([^"]+)"', r.text)
-            img   = re.search(r'(https://cdn-imgix\.headout\.com/[^\s"\']+\.(?:jpg|jpeg|png|webp))', r.text)
-            price = re.search(r'"price":\s*"?(\d+\.?\d*)"?', r.text)
-            if not title:
-                mark_headout_posted(url)
-                continue
-            # Skip free/zero-price listings
-            price_val = float(price.group(1)) if price else 0
-            if price_val == 0:
-                print(f"  SKIP (price=0): {url.split('headout.com')[1][:60]}")
-                mark_headout_posted(url)
-                continue
-            t = unescape(title.group(1)).strip()
-            d = unescape(desc.group(1)).strip()[:400] if desc else ""
-            i = img.group(1) if img else ""
-        except Exception as e:
-            print(f"Scrape err: {e}")
-            mark_headout_posted(url)
-            continue
-
-        print(f"[HEADOUT] {t[:60]}")
-        result = publish(session, user_id, t, d, link, i, "headout")
-        mark_headout_posted(url)
-
-        if "url" in result:
-            print(f"OK: {result['url']}")
-            return True
-        print(f"FAIL: {result['error']}")
-        return False
-
     return False
 
 
