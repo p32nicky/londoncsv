@@ -206,16 +206,26 @@ def publish(session, user_id, title, description, link, image_url, source):
 def post_viator(session, user_id):
     conn = get_db()
     cur = conn.cursor()
+    # Prioritize food/experience tours: case-insensitive title search
     cur.execute("""SELECT slug, title, description, link, image_url
                    FROM tours WHERE substack_posted_at IS NULL
                    AND link IS NOT NULL AND link != ''
-                   ORDER BY id LIMIT 1""")
+                   ORDER BY CASE
+                     WHEN title ILIKE '%food%' OR title ILIKE '%eat%' OR title ILIKE '%cook%' OR title ILIKE '%wine%' OR title ILIKE '%cheese%' THEN 0
+                     WHEN title ILIKE '%photo%' OR title ILIKE '%exclusive%' OR title ILIKE '%vip%' OR title ILIKE '%opera%' OR title ILIKE '%concert%' THEN 1
+                     ELSE 2
+                   END, id LIMIT 1""")
     row = cur.fetchone()
     if not row:
         cur.execute("UPDATE tours SET substack_posted_at=NULL")
         conn.commit()
         cur.execute("""SELECT slug, title, description, link, image_url
-                       FROM tours WHERE link IS NOT NULL ORDER BY id LIMIT 1""")
+                       FROM tours WHERE link IS NOT NULL
+                       ORDER BY CASE
+                         WHEN title ILIKE '%food%' OR title ILIKE '%eat%' OR title ILIKE '%cook%' OR title ILIKE '%wine%' OR title ILIKE '%cheese%' THEN 0
+                         WHEN title ILIKE '%photo%' OR title ILIKE '%exclusive%' OR title ILIKE '%vip%' OR title ILIKE '%opera%' OR title ILIKE '%concert%' THEN 1
+                         ELSE 2
+                       END, id LIMIT 1""")
         row = cur.fetchone()
     conn.close()
     if not row:
