@@ -88,7 +88,7 @@ Tone: enthusiastic honest travel writer. No booking CTAs. Plain text only."""
 
 
 def build_doc(title, description, link, source, cover_cdn=None):
-    brand = "Viator"
+    brand = "Trip.com" if source == "tripcom" else "Viator"
     article = groq_article(title, description)
 
     nodes = []
@@ -251,12 +251,38 @@ def post_viator(session, user_id):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+def post_tripcom(session, user_id):
+    import csv
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tripcom_london.csv")
+    if not os.path.exists(path):
+        print("[TRIPCOM] no tripcom_london.csv"); return False
+    tours = [r for r in csv.DictReader(open(path, encoding="utf-8"))
+             if r.get("url") and r.get("title")]
+    if not tours:
+        return False
+    idx = int(get_setting("tripcom_london_idx", "0")) % len(tours)
+    t = tours[idx]
+    set_setting("tripcom_london_idx", str(idx + 1))
+    title, link, image = t["title"], t["url"], t.get("image_url", "")
+    print(f"[TRIPCOM] {title[:60]}")
+    result = publish(session, user_id, title, title, link, image, "tripcom")
+    if "url" in result:
+        print(f"OK: {result['url']}"); return True
+    print(f"FAIL: {result.get('error')}"); return False
+
+
 def main():
     session = get_session()
     user_id = get_user_id(session)
     print(f"User: {user_id}")
 
-    post_viator(session, user_id)
+    # Alternate Viator <-> Trip.com each run.
+    last = get_setting("london_substack_last_source", "viator")
+    source = "tripcom" if last == "viator" else "viator"
+    print(f"Last: {last} -> Source: {source}")
+    ok = post_tripcom(session, user_id) if source == "tripcom" else post_viator(session, user_id)
+    if ok:
+        set_setting("london_substack_last_source", source)
 
 
 if __name__ == "__main__":
