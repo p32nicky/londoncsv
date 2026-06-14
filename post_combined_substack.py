@@ -234,6 +234,8 @@ def post_viator(session, user_id):
     # Force direct-to-tour landing (skip Viator's "similar options" concierge page)
     if link and "target_lander=NONE" not in link:
         link += ("&" if "?" in link else "?") + "target_lander=NONE"
+    if "campaign=" not in link:
+        link += "&campaign=substack-London"
     print(f"[VIATOR] {title[:60]}")
     result = publish(session, user_id, title or "", desc or "", link, img or "", "viator")
 
