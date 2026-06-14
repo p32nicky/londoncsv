@@ -264,6 +264,8 @@ def post_tripcom(session, user_id):
     t = tours[idx]
     set_setting("tripcom_london_idx", str(idx + 1))
     title, link, image = t["title"], t["url"], t.get("image_url", "")
+    if "trip_sub1" not in link:
+        link += ("&" if "?" in link else "?") + "trip_sub1=substack&trip_sub2=London"
     print(f"[TRIPCOM] {title[:60]}")
     result = publish(session, user_id, title, title, link, image, "tripcom")
     if "url" in result:
