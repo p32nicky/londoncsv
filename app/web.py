@@ -269,6 +269,10 @@ async def contact(request: Request):
 async def affiliate_disclosure(request: Request):
     return templates.TemplateResponse("affiliate_disclosure.html", {"request": request, "site_title": settings.site_title})
 
+@app.get("/terms", response_class=HTMLResponse)
+async def terms(request: Request):
+    return templates.TemplateResponse("terms.html", {"request": request, "site_title": settings.site_title})
+
 
 def _tumblr_keys():
     ck = os.environ.get("TUMBLR_CONSUMER_KEY", "").strip()
