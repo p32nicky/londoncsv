@@ -224,6 +224,12 @@ async def robots():
     return Response(content=content, media_type="text/plain")
 
 
+@app.get("/tiktokACC7DTXnOfs7i3yT7Sa5EcAHrzGCBTfR.txt")
+async def tiktok_verify():
+    return Response(content="tiktok-developers-site-verification=ACC7DTXnOfs7i3yT7Sa5EcAHrzGCBTfR",
+                    media_type="text/plain")
+
+
 @app.get("/sitemap.xml")
 async def sitemap():
     base = "https://www.londonadventurehub.com"
