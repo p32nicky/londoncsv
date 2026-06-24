@@ -10,10 +10,11 @@ from requests_oauthlib import OAuth1
 BLOG = "explore-londontours.tumblr.com"
 API_URL = f"https://api.tumblr.com/v2/blog/{BLOG}/post"
 
-CONSUMER_KEY    = "TxHYOvd4AVFPBTiKy3AAAbpr9ztCJdFLa8fzTvSiJ9TV3vR1zx"
-CONSUMER_SECRET = "p9rAvpJVp9CakR1XwN08jtXs797HHJumYO4MSRKdCqV14Kuh2x"
-TOKEN           = "M18FBknEUfj5MtSzARSTy5FEoJLUReb2UxkccqyUqJ9CyJUkkj"
-TOKEN_SECRET    = "XVscoOV1zTOx4xrJfL88ZzBksJPOrt06prA46ZhNi7yo8kMrvW"
+import os
+CONSUMER_KEY    = os.environ.get("TUMBLR_CONSUMER_KEY", "TxHYOvd4AVFPBTiKy3AAAbpr9ztCJdFLa8fzTvSiJ9TV3vR1zx")
+CONSUMER_SECRET = os.environ.get("TUMBLR_CONSUMER_SECRET", "p9rAvpJVp9CakR1XwN08jtXs797HHJumYO4MSRKdCqV14Kuh2x")
+TOKEN           = os.environ.get("TUMBLR_TOKEN", "M18FBknEUfj5MtSzARSTy5FEoJLUReb2UxkccqyUqJ9CyJUkkj")
+TOKEN_SECRET    = os.environ.get("TUMBLR_TOKEN_SECRET", "XVscoOV1zTOx4xrJfL88ZzBksJPOrt06prA46ZhNi7yo8kMrvW")
 
 
 def _auth():
@@ -34,6 +35,7 @@ def post_tour(tour: dict) -> dict:
     link = tour.get("link", "")  # already TinyURL
     image_url = tour.get("image_url", "")
     keywords = tour.get("keywords", "") or ""
+    youtube_url = tour.get("youtube_url", "")
 
     # Build tags from keywords
     raw = [w.strip() for w in keywords.split(",") if w.strip()]
@@ -47,7 +49,7 @@ def post_tour(tour: dict) -> dict:
 
     caption = f"<b>{title}</b>"
     caption += f"<br/><br/>{description}"
-    caption += f"<br/><br/><a href=\"{link}\">👉 Book this tour on Viator</a>"
+    caption += f"<br/><br/><a href=\"{link}\">Book this trip on Viator</a>"
 
     data = {
         "type": "photo",
