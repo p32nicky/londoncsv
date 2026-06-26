@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   post:
@@ -26,3 +26,10 @@ jobs:
           TUMBLR_TOKEN: ${{ secrets.TUMBLR_TOKEN }}
           TUMBLR_TOKEN_SECRET: ${{ secrets.TUMBLR_TOKEN_SECRET }}
         run: python sync_tumblr.py
+      - name: Commit rate limit log
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .london_last_post || true
+          git commit -m "Update London Tumblr rate limit [skip ci]" || true
+          git push || true
