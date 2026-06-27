@@ -25,11 +25,16 @@ jobs:
           TUMBLR_CONSUMER_SECRET: ${{ secrets.TUMBLR_CONSUMER_SECRET }}
           TUMBLR_TOKEN: ${{ secrets.TUMBLR_TOKEN }}
           TUMBLR_TOKEN_SECRET: ${{ secrets.TUMBLR_TOKEN_SECRET }}
+          TUMBLR_BATCH: "2"   # drip 2/run, not a 5-burst — healthier tag presence
         run: python sync_tumblr.py
       - name: Commit rate limit log
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add .london_last_post || true
-          git commit -m "Update London Tumblr rate limit [skip ci]" || true
-          git push || true
+          git commit -m "Update London Tumblr rate limit [skip ci]" || exit 0
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash && git push && exit 0
+            sleep $((RANDOM % 5 + 2))
+          done
+          echo "::error::failed to persist rate-limit log" && exit 1
