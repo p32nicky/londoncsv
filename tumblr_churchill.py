@@ -68,11 +68,19 @@ def post(caption):
     body = caption + f'<br/><br/><a href="{SITE}">Visitor guide &amp; tickets →</a>'
     data = {"type": "photo", "caption": body[:2000], "tags": TAGS,
             "link": SITE, "source": IMAGE}
-    r = requests.post(API_URL, data=data, auth=auth, timeout=20)
-    if r.status_code in (200, 201):
-        pid = r.json().get("response", {}).get("id", "")
-        return {"id": pid, "url": f"https://{BLOG}/post/{pid}"}
-    return {"error": r.text[:300]}
+    # Retry transient 429s (the London poster shares this blog and can be mid-burst).
+    for attempt in range(5):
+        r = requests.post(API_URL, data=data, auth=auth, timeout=20)
+        if r.status_code in (200, 201):
+            pid = r.json().get("response", {}).get("id", "")
+            return {"id": pid, "url": f"https://{BLOG}/post/{pid}"}
+        if r.status_code == 429 and attempt < 4:
+            wait = 30 * (attempt + 1)
+            print(f"  429 rate limit — waiting {wait}s (attempt {attempt+1}/5)")
+            time.sleep(wait)
+            continue
+        return {"error": r.text[:300]}
+    return {"error": "rate limited after 5 attempts"}
 
 
 def main():
