@@ -68,19 +68,21 @@ def post(caption):
     body = caption + f'<br/><br/><a href="{SITE}">Visitor guide &amp; tickets →</a>'
     data = {"type": "photo", "caption": body[:2000], "tags": TAGS,
             "link": SITE, "source": IMAGE}
-    # Retry transient 429s (the London poster shares this blog and can be mid-burst).
-    for attempt in range(5):
+    # Retry transient 429s (the London poster shares this Tumblr app).
+    for attempt in range(3):
         r = requests.post(API_URL, data=data, auth=auth, timeout=20)
         if r.status_code in (200, 201):
             pid = r.json().get("response", {}).get("id", "")
             return {"id": pid, "url": f"https://{BLOG}/post/{pid}"}
-        if r.status_code == 429 and attempt < 4:
-            wait = 30 * (attempt + 1)
-            print(f"  429 rate limit — waiting {wait}s (attempt {attempt+1}/5)")
+        if r.status_code == 429 and attempt < 2:
+            wait = 25 * (attempt + 1)
+            print(f"  429 rate limit — waiting {wait}s (attempt {attempt+1}/3)")
             time.sleep(wait)
             continue
+        if r.status_code == 429:
+            return {"ratelimited": True}
         return {"error": r.text[:300]}
-    return {"error": "rate limited after 5 attempts"}
+    return {"ratelimited": True}
 
 
 def main():
@@ -95,6 +97,10 @@ def main():
         posted[today] = {"url": res["url"], "at": datetime.now(timezone.utc).isoformat()}
         save_posted(posted)
         print(f"[OK] {res['url']}")
+    elif res.get("ratelimited"):
+        # Tumblr app throttle (London poster shares it). Not our fault — skip
+        # gracefully so no failure email; tomorrow's run tries again.
+        print("[skip] Tumblr rate-limited this run — will try again next day")
     else:
         print(f"[ERR] {res.get('error', '?')}")
         sys.exit(1)
