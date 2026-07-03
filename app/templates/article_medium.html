@@ -4,12 +4,13 @@
   <meta charset="UTF-8"/>
   <title>{{ t.title }}</title>
   <meta name="description" content="{{ t.description[:160] if t.description else t.title }}"/>
-  <link rel="canonical" href="https://www.londonadventurehub.com/tour/{{ t.slug }}/medium"/>
+  <link rel="canonical" href="https://www.londonadventurehub.com/tour/{{ t.slug }}"/>
+  <meta name="robots" content="noindex"/>
   <meta property="og:type" content="article"/>
   <meta property="og:title" content="{{ t.title }}"/>
   <meta property="og:description" content="{{ t.description[:160] if t.description else t.title }}"/>
   {% if t.image_url %}<meta property="og:image" content="{{ t.image_url }}"/>{% endif %}
-  <meta property="og:url" content="https://www.londonadventurehub.com/tour/{{ t.slug }}/medium"/>
+  <meta property="og:url" content="https://www.londonadventurehub.com/tour/{{ t.slug }}"/>
 </head>
 <body>
 <article>
